@@ -30,7 +30,7 @@ def write_xml(data, sitename):
     sitename_node = newdoc.createElement("sitename")
     sitename_attribute = newdoc.createTextNode(sitename)
     sitename_node.appendChild(sitename_attribute)
-    top_element.appendChild(sitename_node)
+    metadata.appendChild(sitename_node)
     data_node = newdoc.createElement("data")
     top_element.appendChild(data_node)
     
