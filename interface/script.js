@@ -9,9 +9,11 @@ var textOffset = 14;
 color = d3.scale.category20();      // color function
 
 var files = ["old_total.csv", "data_total.csv", "data3.csv"];
+var files_xml = ["test1.xml", "test2.xml"];
 var datas = [];
 var data;
 var owners = [];
+var sitename = "UNKNOWN";
 
 // with this function every data from every files has the same owners (if one is missing fill with null owner)
 function add_missing_owners(d, o)
@@ -34,14 +36,59 @@ function add_missing_owners(d, o)
 	  });
 }
 
+function get_sitename(data)
+{
+    sitename = data[0].sitename;
+    for (var i=0; i<data.length; ++i)
+    {
+	if (data[i].sitename != sitename) sitename = "ERROR on SITENAME";
+    }
+    return sitename
+}
+
+// load xml
+function load_xml(xml)
+{
+    var result = [];
+    var xmlroot = xml.documentElement;
+    var metadata = xmlroot.getElementsByTagName("metadata");
+    var sitename = metadata[0].getElementsByTagName("sitename")[0].childNodes[0].nodeValue;
+    var time = metadata[0].childNodes[0].childNodes[0].nodeValue
+    var time = new Date(time);
+    var data = xmlroot.getElementsByTagName("data")[0];
+    var owners_xml = data.getElementsByTagName("owner");
+    for (var i=0; i<owners_xml.length; ++i)
+    {
+	var userdata = owners_xml[i];
+	result.push({"name": userdata.getAttribute("name"),
+		     "files": userdata.getAttribute("files"),
+		     "size": userdata.getAttribute("size")});
+    }
+    result.sitename = sitename;
+    result.time = time;
+    return result;
+}
+
+var dataxml = [];
+var remaining_xml = files_xml.length;
+files_xml.map(function(d,i) {
+    d3.xml(d, function(xml) {
+	dataxml.push(load_xml(xml));
+	if (!--remaining_xml) {
+	    d3.select("#sitename").text(get_sitename(dataxml) + " usage");
+	    console.log(dataxml);
+	}
+    });
+});
+
 // load the data
 var remaining = files.length;
 files.map(function(d,i) {
     d3.csv(d, function(csv) {
 	datas[i] = csv;
-	console.log(datas[i]);
 	datas[i].map(function(d) { if (owners.indexOf(d.owner)<0) owners.push(d.owner); });
 	if (!--remaining) { 
+	    console.log(datas);
 	    add_missing_owners(datas, owners);
 	    var j=0;
 	    for (j=0; j<datas.length; j++) {
