@@ -8,9 +8,7 @@ var textOffset = 14;
 
 color = d3.scale.category20();      // color function
 
-var files = ["old_total.csv", "data_total.csv", "data3.csv"];
 var files_xml = ["test1.xml", "test2.xml"];
-var datas = [];
 var data;
 var owners = [];
 var sitename = "UNKNOWN";
@@ -46,6 +44,11 @@ function get_sitename(data)
     return sitename
 }
 
+function get_summary_user(user_data)
+{
+    return nameFromOwner(user_data.owner) + '\n' + (user_data.size / 1024/1024).toFixed(2) + ' Tb';
+}
+
 // load xml
 function load_xml(xml)
 {
@@ -60,7 +63,7 @@ function load_xml(xml)
     for (var i=0; i<owners_xml.length; ++i)
     {
 	var userdata = owners_xml[i];
-	result.push({"name": userdata.getAttribute("name"),
+	result.push({"owner": userdata.getAttribute("name"),
 		     "files": userdata.getAttribute("files"),
 		     "size": userdata.getAttribute("size")});
     }
@@ -73,34 +76,22 @@ var dataxml = [];
 var remaining_xml = files_xml.length;
 files_xml.map(function(d,i) {
     d3.xml(d, function(xml) {
-	dataxml.push(load_xml(xml));
+	dataxml[i] = load_xml(xml);
+	dataxml[i].map(function(d) { if (owners.indexOf(d.owner)<0) owners.push(d.owner); });
 	if (!--remaining_xml) {
-	    d3.select("#sitename").text(get_sitename(dataxml) + " usage");
+	    add_missing_owners(dataxml, owners);
 	    console.log(dataxml);
+	    d3.select("#sitename").text(get_sitename(dataxml) + " usage");
+	    for (var j=0; j<dataxml.length; j++) {
+		dataxml[j].sort(function(a,b) { return d3.ascending(a.owner, b.owner); });
+	    }
+	    data = dataxml[dataxml.length - 1]; update(); draw_stack();
 	}
     });
 });
 
-// load the data
-var remaining = files.length;
-files.map(function(d,i) {
-    d3.csv(d, function(csv) {
-	datas[i] = csv;
-	datas[i].map(function(d) { if (owners.indexOf(d.owner)<0) owners.push(d.owner); });
-	if (!--remaining) { 
-	    console.log(datas);
-	    add_missing_owners(datas, owners);
-	    var j=0;
-	    for (j=0; j<datas.length; j++) {
-		datas[j].sort(function(a,b) { return d3.ascending(a.owner, b.owner); });
-	    }
-	    data = datas[datas.length - 1]; update(); draw_stack(); 
-	};
-    })
-});
-
 // add the button at the top
-d3.select("#buttons").selectAll("div").data(files).enter().append("button").attr("type", "button").text(function(d) { return d; }).on("click", function(d,i) {data = datas[i]; update()});
+d3.select("#buttons").selectAll("div").data(files_xml).enter().append("button").attr("type", "button").text(function(d) { return d; }).on("click", function(d,i) {data = dataxml[i]; update()});
 
 
 function nameFromOwner(owner) { return owner.substr(owner.lastIndexOf("/CN=") + 4); }
@@ -244,13 +235,12 @@ var totalLabel = center_group.append("svg:text")
 
 function draw_stack()
 {
-    var n = d3.max(datas.map(function(d) {return d.length})); // number of layers
-    var m = datas.length; // number of samples per layer
+    var n = d3.max(dataxml.map(function(d) {return d.length})); // number of layers
+    var m = dataxml.length; // number of samples per layer
 
-    myinput = d3.transpose(datas).map(function(d,i) {return d.map(function(dd,ii) {return {x:ii, y:parseInt(dd.size)};})});
+    myinput = d3.transpose(dataxml).map(function(d,i) {return d.map(function(dd,ii) {return {x:ii, y:parseInt(dd.size)};})});
     data_stack = d3.layout.stack().order("inside-out").offset("zero")(myinput);
     color_stack = d3.interpolateRgb("#aad", "#556");
-
 
     var w = 600,
     h = 300,
@@ -288,7 +278,7 @@ function draw_stack()
 	    d3.select("#path_pie" + i).attr("style", "fill:" + color(i));
 	})
 	.attr("d", area)
-	.append("svg:title").text(function(d,i) {return nameFromOwner(datas[0][i].owner)});
+	.append("svg:title").text(function(d,i) { return get_summary_user(dataxml[dataxml.length - 1][i]); });
     
     rules = vis_stack.append("svg:g")
 	.attr("class", "rules");
@@ -301,8 +291,8 @@ function draw_stack()
 	.attr("stroke-width", 1)
 	.style("stroke", "#000");
 
-    x = d3.scale.linear().domain([0, datas.length-1]).range([0, w]),
-    vis_stack.append("svg:g").attr("class", "labels").selectAll("text").data(datas).enter().append("text")
+    x = d3.scale.linear().domain([0, dataxml.length-1]).range([0, w]),
+    vis_stack.append("svg:g").attr("class", "labels").selectAll("text").data(dataxml).enter().append("text")
 	.attr("text-anchor", "middle")
 	.attr("transform", function(d,i) {return "translate(" + x(i) + "," + h +")"; })    
 	.text(function(d,i) { return i; });
@@ -352,8 +342,8 @@ function update() {
 	    d3.select(this).attr("style", "fill: #ff0")})
 	.on("mouseout", function(d,i){
 	    d3.select(this).attr("style", "fill: " + color(i))
-	    d3.select("#path_stack" + i).attr("style", "fill: " + color(i));
-	});
+	    d3.select("#path_stack" + i).attr("style", "fill: " + color(i));})
+	.append("svg:title").text(function(d,i) { return get_summary_user(d.data); });
 
     //DRAW TICK MARK LINES FOR LABELS
     lines = label_group.selectAll("line").data(pieData);
