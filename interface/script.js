@@ -132,7 +132,7 @@ function tabulate(data, columns) {
 	.data(function(row, i) {
 	    return columns.map(function(column) {
 		if (column == "owner")
-		    return {column: column, value: '<a href=\"datasetlist_' + i + '.html\">' + row[column] + '</a>'};
+                    return {column: column, value: '<a href=\"' + sitename + '_filelist_user' + i + '.html\">' + row[column] + '</a>'};
 		else return {column: column, value: row[column]};
 	    });
 	})
