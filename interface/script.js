@@ -8,7 +8,7 @@ var textOffset = 14;
 
 color = d3.scale.category20();      // color function
 
-var files_xml = ["test1.xml", "test2.xml"];
+var files_xml = ["test1.xml", "test2.xml", "test3.xml"];
 var data;
 var owners = [];
 var sitename = "UNKNOWN";
@@ -283,6 +283,7 @@ function draw_stack()
     rules = vis_stack.append("svg:g")
 	.attr("class", "rules");
 
+    // x-axis line
     rules.append("line")
 	.attr("x1", 0)
 	.attr("x2", w)
@@ -291,11 +292,23 @@ function draw_stack()
 	.attr("stroke-width", 1)
 	.style("stroke", "#000");
 
+    // x-axis labels
     x = d3.scale.linear().domain([0, dataxml.length-1]).range([0, w]),
     vis_stack.append("svg:g").attr("class", "labels").selectAll("text").data(dataxml).enter().append("text")
 	.attr("text-anchor", "middle")
 	.attr("transform", function(d,i) {return "translate(" + x(i) + "," + h +")"; })    
-	.text(function(d,i) { return i; });
+	.text(function(d,i) { return d3.time.format("%d/%m/%y")(d.time);});
+
+    // vertical line for every date
+    vis_stack.append("svg:g").attr("class", "vertical_lines").selectAll("vertical_lines").data(dataxml).enter().append("line")
+	.attr("x1", function(d,i) { return x(i); })
+	.attr("x2", function(d,i) { return x(i); })
+	.attr("y1", 0).attr("y2", hpath)
+	.attr("stroke-width", 1)
+	.style("stroke", "#222")
+	.attr("opacity", "0.2")
+	.on("mouseover", function(){d3.select(this).attr("opacity", "1");})
+	.on("mouseout", function(){d3.select(this).attr("opacity", "0.2");});
 
 }
 
