@@ -10,10 +10,11 @@ import csv
 from xml.dom.minidom import getDOMImplementation
 from optparse import OptionParser
 import logging
+from os import path
 
 printing_lock = threading.Lock()
 
-def write_xml(data, sitename):
+def generate_xml(data, sitename):
     impl = getDOMImplementation()
     newdoc = impl.createDocument(None, "DiskUsage", None)
     top_element = newdoc.documentElement
@@ -40,9 +41,9 @@ def write_xml(data, sitename):
         owner_node.setAttribute("files", datum["files"].__str__())
         owner_node.setAttribute("size", datum["size"].__str__())
         data_node.appendChild(owner_node)
-    
-    with open("usage_%s_%s.xml" % (options.site, datetime.today().date().isoformat()), "w") as f:
-        f.write(newdoc.toxml())
+
+    retrun newtoc.toxml()
+
 
 def get_datetime(s):
     try:
@@ -124,6 +125,7 @@ if __name__ == "__main__":
     parser.add_option('--rerun', action='store_true', default=False, help='reuse the previous list of file')
     parser.add_option('--workers', type=int, help='# number of worker', default=70)
     parser.add_option('--debug_small', action='store_true', default=False, help='run only on a small subsample (only for debugging)')
+    parser.add_option('--output-dir', help='output directory to store the xml file')
     (options, args) = parser.parse_args()
 
     if (len(args) == 1):
@@ -145,10 +147,11 @@ if __name__ == "__main__":
             all_datasets = f.read().split('\n')
             f.close()
         except IOError:
-            logging.error("cannot find the list of file for site %s, downloading it..." % options.site)
+            logging.error("cannot find the list of file for site %s" % options.site)
             need_to_download_list = True
 
     if (need_to_download_list):
+        logging.info("downloading list of datasets")
         all_datasets = download_list(options.site)
         f = open(all_datasets_filename, "w")
         for _ in all_datasets:
@@ -187,8 +190,7 @@ if __name__ == "__main__":
 
     # grouping result with user id
     datasets_fullmetadata = sorted(datasets_fullmetadata, key=itemgetter("owner"))
-#    from pprint import pprint
-#    pprint(datasets_fullmetadata)
+
     groups = []
     users_name = []
     for k, g in groupby(datasets_fullmetadata, key=itemgetter("owner")):
@@ -198,7 +200,7 @@ if __name__ == "__main__":
 
     for i, (datasets_user,u) in enumerate(zip(groups, users_name)):
         user_filename = "%s_filelist_user%d.html" % (options.site, i)
-        fuser = open(user_filename, "w")
+        fuser = open(path.join(options.output_dir, user_filename), "w")
         fuser.write("""
 <html>
 <head><title>{user} stastistics</title></head>
@@ -228,6 +230,8 @@ if __name__ == "__main__":
 </html>
 """)
 
+    ###################################
+    # remove the csv output
     fieldnames = ["owner", "files", "size"]
     fcvs = open("data.csv", "wb")
     fcvs.write(",".join(fieldnames) + '\n')
@@ -241,6 +245,14 @@ if __name__ == "__main__":
                "size": int(sum(map(lambda x: int(x["size"].strip()) if x["size"].strip().isdigit() else 0, userdata))/1024./1024.)}
         output_data.append(row)
         cvsWriter.writerow(row)
+    ####################################
 
-    write_xml(output_data, options.site)
 
+    xml = generate_xml(output_data, options.site)
+
+    output_filename = "usage_%s_%s.xml" % (options.site, datetime.today().date().isoformat())
+    output_complete_filename = path.join(options.output_dir, output_filename)
+
+    with open(output_complete_filename, "w") as f:
+        f.write(xml)
+    sys.exit(output_complete_filename)
