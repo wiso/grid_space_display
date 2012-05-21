@@ -10,5 +10,5 @@ echo password | voms-proxy-init -voms atlas -pwstdin
 
 # run dumper
 INTERFACE_DIR=../interface
-echo python list_d2.sh
+python list_dq2.py
 echo $? >> $INTERFACE_DIR/xml_list

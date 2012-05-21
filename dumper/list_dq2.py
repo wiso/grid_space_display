@@ -42,7 +42,7 @@ def generate_xml(data, sitename):
         owner_node.setAttribute("size", datum["size"].__str__())
         data_node.appendChild(owner_node)
 
-    retrun newtoc.toxml()
+    return newtoc.toxml()
 
 
 def get_datetime(s):
