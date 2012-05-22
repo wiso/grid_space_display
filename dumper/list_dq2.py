@@ -72,8 +72,8 @@ class Worker(threading.Thread):
         while True:
             i, dataset_metadata = self.queue.get()
             with printing_lock:
-                print "\rdataset %d\t(%s)  " % (i, self.name),
-                sys.stdout.flush()
+                print >> sys.stderr, "\rdataset %d\t(%s)  " % (i, self.name),
+                sys.stderr.flush()
             m = get_metadata(dataset_metadata["name"], self.site)
             m.update(dataset_metadata)
             m['creationdate'] = get_datetime(m['creationdate'])
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     datasets_fullmetadata = []
     while not output_queue.empty():
         datasets_fullmetadata.append(output_queue.get())
-    print "\n"
+
     logging.info("Elapsed Time: %s. Time per dataset: %s" % (stop - start, (stop-start) / len(datasets_fullmetadata)))
     logging.info("%d dataset parsed" % len(datasets_fullmetadata))
 
@@ -255,4 +255,4 @@ if __name__ == "__main__":
 
     with open(output_complete_filename, "w") as f:
         f.write(xml)
-    sys.exit(output_complete_filename)
+    print output_complete_filename
