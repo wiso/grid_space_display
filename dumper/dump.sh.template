@@ -10,5 +10,5 @@ echo password | voms-proxy-init -voms atlas -pwstdin
 
 # run dumper
 INTERFACE_DIR=../interface
-python list_dq2.py INFN-MILANO-ATLASC_LOCALGROUPDISK
+python list_dq2.py --output-dir . INFN-MILANO-ATLASC_LOCALGROUPDISK
 echo $? >> $INTERFACE_DIR/xml_list

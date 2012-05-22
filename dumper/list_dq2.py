@@ -42,7 +42,7 @@ def generate_xml(data, sitename):
         owner_node.setAttribute("size", datum["size"].__str__())
         data_node.appendChild(owner_node)
 
-    return newtoc.toxml()
+    return newdoc.toxml()
 
 
 def get_datetime(s):
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     parser.add_option('--rerun', action='store_true', default=False, help='reuse the previous list of file')
     parser.add_option('--workers', type=int, help='# number of worker', default=70)
     parser.add_option('--debug_small', action='store_true', default=False, help='run only on a small subsample (only for debugging)')
-    parser.add_option('--output-dir', help='output directory to store the xml file')
+    parser.add_option('--output-dir', default=".", help='output directory to store the xml file')
     (options, args) = parser.parse_args()
 
     if (len(args) == 1):
