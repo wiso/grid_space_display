@@ -92,8 +92,18 @@ function load_xml(xml)
     var xmlroot = xml.documentElement;
     var metadata = xmlroot.getElementsByTagName("metadata");
     var sitename = metadata[0].getElementsByTagName("sitename")[0].childNodes[0].nodeValue;
-    var time = metadata[0].childNodes[0].childNodes[0].nodeValue
-    var time = new Date(time);
+    var datetime = metadata[0].childNodes[0].childNodes[0].nodeValue
+    var datetime_splitted = datetime.split(" ");
+    var date_splitted = datetime_splitted[0].split("-");
+    var time_splitted = datetime_splitted[1].split(":");
+    time_splitted[2] = time_splitted[2].split(".")[0];
+    console.log("raw datetime: " + datetime);
+    console.log("left: " + datetime_splitted[0]);
+    console.log("right: " + datetime_splitted[1]);
+    console.log("date splitted: " + date_splitted);
+    console.log("time splitted: " + time_splitted);
+    var time = new Date(date_splitted[0], date_splitted[1]-1, date_splitted[2], time_splitted[0], time_splitted[1], time_splitted[2]);
+    console.log("time: " + time);
     var data = xmlroot.getElementsByTagName("data")[0];
     var owners_xml = data.getElementsByTagName("owner");
     for (var i=0; i<owners_xml.length; ++i)
@@ -277,8 +287,9 @@ function draw_stack()
 	});
     });
 
-    var min_timestamp = d3.min(dataxml.map(function(d,i) { return d.time.getTime(); }));
+    var min_timestamp = d3.min(dataxml.map(function(d,i) { console.log(d.time); return d.time.getTime(); }));
     var max_timestamp = d3.max(dataxml.map(function(d,i) { return d.time.getTime(); }));
+
 
     var mx = max_timestamp - min_timestamp;
 
