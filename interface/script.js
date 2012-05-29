@@ -1,3 +1,11 @@
+// console for IE
+console_debug = function(log_txt) { if (window.console != undefined) { console.log(log_txt); } }
+console_warning = function (log_txt) { if (window.console != undefined) { console.warning(log_txt); } }
+console_error = function (log_txt) { if (window.console != undefined) { console.error(log_txt); } }
+
+
+
+
 // pie geometry
 var w = 550;                        // width
 var h = 300;                        // height
@@ -22,7 +30,7 @@ var totalGb = "UNKOWN";
 
 d3.text("xml_list", function(list) {
     if (!list) {
-	console.error("file not found: probably you have to copy and edit xml_list.template to xml_list");
+	console_error("file not found: probably you have to copy and edit xml_list.template to xml_list");
 	d3.select("#sitename").text("Error: No data found");
 	return;
     }
@@ -103,13 +111,7 @@ function load_xml(xml)
     var date_splitted = datetime_splitted[0].split("-");
     var time_splitted = datetime_splitted[1].split(":");
     time_splitted[2] = time_splitted[2].split(".")[0];
-    console.log("raw datetime: " + datetime);
-    console.log("left: " + datetime_splitted[0]);
-    console.log("right: " + datetime_splitted[1]);
-    console.log("date splitted: " + date_splitted);
-    console.log("time splitted: " + time_splitted);
     var time = new Date(date_splitted[0], date_splitted[1]-1, date_splitted[2], time_splitted[0], time_splitted[1], time_splitted[2]);
-    console.log("time: " + time);
     var data = xmlroot.getElementsByTagName("data")[0];
     var owners_xml = data.getElementsByTagName("owner");
     for (var i=0; i<owners_xml.length; ++i)
@@ -293,7 +295,7 @@ function draw_stack()
 	});
     });
 
-    var min_timestamp = d3.min(dataxml.map(function(d,i) { console.log(d.time); return d.time.getTime(); }));
+    var min_timestamp = d3.min(dataxml.map(function(d,i) { return d.time.getTime(); }));
     var max_timestamp = d3.max(dataxml.map(function(d,i) { return d.time.getTime(); }));
 
 
@@ -334,8 +336,8 @@ function draw_stack()
     
     // y ticks
     totalGb_round = (totalGb / 100.).toFixed() * 100;
-    console.log(totalGb);
-    console.log(totalGb_round);
+    console_log(totalGb);
+    console_log(totalGb_round);
     var y = d3.scale.linear().domain([0, totalGb_round]).range([0, hpath]);
     vis_stack.append("svg:g").attr("class", "labels").selectAll("yticks").data(d3.range(0,totalGb_round, totalGb_round/10)).enter().append("line")
 	.attr("y1", function(d,i) { return y(d); })
@@ -439,7 +441,7 @@ function draw_pie() {
 	.append("svg:title").text(function(d,i) { return get_summary_user(d.data); });
 
 // update tiles (not enter selection)
-//    paths.attr("svg:title").text(function(d,i) {console.log("X"); return get_summary_user(d.data); });
+//    paths.attr("svg:title").text(function(d,i) {console_log("X"); return get_summary_user(d.data); });
 
     //DRAW TICK MARK LINES FOR LABELS
     lines = label_group.selectAll("line").data(pieData);
