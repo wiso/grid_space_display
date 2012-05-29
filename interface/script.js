@@ -1,5 +1,5 @@
 // console for IE
-console_debug = function(log_txt) { if (window.console != undefined) { console.log(log_txt); } }
+console_log = function(log_txt) { if (window.console != undefined) { console.log(log_txt); } }
 console_warning = function (log_txt) { if (window.console != undefined) { console.warning(log_txt); } }
 console_error = function (log_txt) { if (window.console != undefined) { console.error(log_txt); } }
 
