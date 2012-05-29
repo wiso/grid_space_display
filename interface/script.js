@@ -21,6 +21,12 @@ var sitename = "UNKNOWN";
 var totalGb = "UNKOWN";
 
 d3.text("xml_list", function(list) {
+    if (!list) {
+	console.error("file not found: probably you have to copy and edit xml_list.template to xml_list");
+	d3.select("#sitename").text("Error: No data found");
+	return;
+    }
+	
     files_xml = list.split("\n");
     // download xmls
     var remaining_xml = files_xml.length;
