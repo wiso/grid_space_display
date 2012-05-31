@@ -255,4 +255,5 @@ if __name__ == "__main__":
 
     with open(output_complete_filename, "w") as f:
         f.write(xml)
-    print output_complete_filename
+
+    print output_complete_filename # this is the only output to stdout

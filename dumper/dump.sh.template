@@ -9,6 +9,6 @@ export DQ2_LOCAL_SITE_ID=INFN-MILANO-ATLASC_LOCALGROUPDISK
 echo password | voms-proxy-init -voms atlas -pwstdin
 
 # run dumper
-INTERFACE_DIR=../interface
-python list_dq2.py --output-dir . INFN-MILANO-ATLASC_LOCALGROUPDISK
-echo $? >> $INTERFACE_DIR/xml_list
+INTERFACE_DIR= # absolute path to interface dir
+OUTPUT=`python list_dq2.py --debug_small --output-dir=$INTERFACE_DIR INFN-MILANO-ATLASC_LOCALGROUPDISK`
+echo $OUTPUT >> $INTERFACE_DIR/xml_list
