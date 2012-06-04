@@ -21,17 +21,16 @@ def generate_xml(data, sitename):
     top_element = newdoc.documentElement
     top_element.setAttribute("version", "0.1")
     top_element.setAttribute("creator", sys.argv[0])
-    comment = newdoc.createComment("NO WARRANTY")
-    top_element.appendChild(comment)
+    import socket
+    top_element.setAttribute("host", socket.gethostname())
+    top_element.appendChild(newdoc.createComment("NO WARRANTY"))
     metadata = newdoc.createElement("metadata")
     top_element.appendChild(metadata)
     d = newdoc.createElement("time")
     metadata.appendChild(d)
-    dd = newdoc.createTextNode("%s" % datetime.today())
-    d.appendChild(dd)
+    d.appendChild(newdoc.createTextNode("%s" % datetime.today()))
     sitename_node = newdoc.createElement("sitename")
-    sitename_attribute = newdoc.createTextNode(sitename)
-    sitename_node.appendChild(sitename_attribute)
+    sitename_node.appendChild(newdoc.createTextNode(sitename))
     metadata.appendChild(sitename_node)
     data_node = newdoc.createElement("data")
     top_element.appendChild(data_node)
@@ -114,7 +113,7 @@ def parse_output(data):
     for line in data:
         l = line.split(",")
         if len(l) != 6:
-            if l!=['']:
+            if l != ['']:
                 logger.error("error parsing %s" % l)
             continue
         result.append({"name": l[0],
@@ -199,7 +198,8 @@ if __name__ == "__main__":
     logger.info("processing %d datasets", len(datasets_metadata))
     start = time.time()
     # populate the queue
-    if options.debug_small: datasets_metadata = datasets_metadata[:20]
+    if options.debug_small:
+        datasets_metadata = datasets_metadata[:20]
     for i, dataset_metadata in enumerate(datasets_metadata):
         queue.put((i+1, dataset_metadata))
 
@@ -234,7 +234,7 @@ if __name__ == "__main__":
         users_name.append(k)
 
     logger.info("writing html for every user (it will be removed)")
-    for i, (datasets_user,u) in enumerate(zip(groups, users_name)):
+    for i, (datasets_user, u) in enumerate(zip(groups, users_name)):
         user_filename = "%s_filelist_user%d.html" % (options.site, i)
         fuser = open(path.join(options.output_dir, user_filename), "w")
         fuser.write("""
