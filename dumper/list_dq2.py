@@ -13,6 +13,7 @@ import logging
 from os import path
 
 printing_lock = threading.Lock()
+logger = None
 
 def generate_xml(data, sitename):
     impl = getDOMImplementation()
@@ -49,26 +50,29 @@ def get_datetime(s):
     try:
         s = s.strip()
     except AttributeError:
-        logging.error("attribute error on string %s" % s)
+        logger.error("attribute error on string %s" % s)
         return datetime.fromtimestamp(0)
 
     try:
         return datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
     except ValueError:
-        logging.error("error converting string '%s' to datetime" % s)
+        logger.error("error converting string '%s' to datetime" % s)
         return datetime.fromtimestamp(0)
     except AttributeError:
-        logging.error("Attribute error converting string '%s' to datetime (python bug, see http://bugs.python.org/issue7980)" % s)
+        logger.error("Attribute error converting string '%s' to datetime (python bug, see http://bugs.python.org/issue7980)" % s)
         return datetime.fromtimestamp(0)
 
 class Worker(threading.Thread):
     def __init__(self, queue, out_queue, site):
         threading.Thread.__init__(self)
+        logger.info("worker initializing")
         self.queue = queue
         self.out_queue = out_queue
         self.site = site
+        self.ndone = 0
 
     def run(self):
+        logger.info("worker starting main loop")
         while True:
             i, dataset_metadata = self.queue.get()
             with printing_lock:
@@ -78,12 +82,15 @@ class Worker(threading.Thread):
             m.update(dataset_metadata)
             m['creationdate'] = get_datetime(m['creationdate'])
             m['replica_creation'] = get_datetime(m['replica_creation'])
+            self.ndone += 1
+            if self.ndone % 100 == 0:
+                logger.info("done %d task" % self.ndone)
             self.out_queue.put(m)
             self.queue.task_done()
 
 def download_list(site):
     cmd = "dq2-list-dataset-site2 -eH %s" % site
-    logging.info("executing", cmd)
+    logger.info("executing %s", cmd)
     popen = subprocess.Popen(cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     return list(popen.stdout)
 
@@ -96,7 +103,7 @@ def get_metadata(dataset, site):
         if len(splitted) == 2:
             result.update({splitted[0].strip(): splitted[1].strip()})
         else:
-            logging.error("cannot parse", keyvalue)
+            logger.error("cannot parse", keyvalue)
     return result
 
 def parse_output(data):
@@ -108,7 +115,7 @@ def parse_output(data):
         l = line.split(",")
         if len(l) != 6:
             if l!=['']:
-                logging.error("error parsing %s" % l)
+                logger.error("error parsing %s" % l)
             continue
         result.append({"name": l[0],
                        "replica": l[1],
@@ -124,7 +131,7 @@ if __name__ == "__main__":
                           usage = usage)
     parser.add_option('--rerun', action='store_true', default=False, help='reuse the previous list of file')
     parser.add_option('--workers', type=int, help='# number of worker', default=70)
-    parser.add_option('--debug_small', action='store_true', default=False, help='run only on a small subsample (only for debugging)')
+    parser.add_option('--debug-small', action='store_true', default=False, help='run only on a small subsample (only for debugging)')
     parser.add_option('--output-dir', default=".", help='output directory to store the xml file')
     (options, args) = parser.parse_args()
 
@@ -132,10 +139,25 @@ if __name__ == "__main__":
         options.site = args[0]
     else:
         raise ValueError("you need to specify the site (for example INFN-MILANO-ATLASC_LOCALGROUPDISK) as positional argument")
-    
-    all_datasets_filename = "datasets_%s.txt" % options.site
 
     datetime_today = datetime.today()
+
+    # configure logger
+    logger = logging.getLogger(__name__)
+    fh = logging.FileHandler("log_%s" % datetime_today)
+    formatter = logging.Formatter('[%(asctime)s] (%(threadName)-11s) %(levelname)s: %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    ch = logging.StreamHandler()
+    ch.setFormatter(logging.Formatter('[%(relativeCreated)d] %(levelname)s: %(message)s'))
+    logger.addHandler(ch)
+    logger.setLevel(logging.INFO)
+    logger.info("starting")
+    logger.info("options: %s", options)
+    if options.debug_small:
+        logger.warning("using only a small sample")
+    
+    all_datasets_filename = "datasets_%s.txt" % options.site
 
     # downloading the list of all dataset in the site
     all_datasets = None
@@ -143,33 +165,38 @@ if __name__ == "__main__":
     if (options.rerun):
         try:
             f = open(all_datasets_filename)
-            logging.info("reusing datasetlist %s" % all_datasets_filename)
+            logger.info("reusing datasetlist %s", all_datasets_filename)
             all_datasets = f.read().split('\n')
             f.close()
         except IOError:
-            logging.error("cannot find the list of file for site %s" % options.site)
+            logger.error("cannot find the list of file for site %s", options.site)
             need_to_download_list = True
 
     if (need_to_download_list):
-        logging.info("downloading list of datasets")
+        logger.info("downloading list of datasets")
         all_datasets = download_list(options.site)
+        logger.info("found %s datasets", len(all_datasets))
+        logger.info("saving list of dataset in %s", all_datasets_filename)
         f = open(all_datasets_filename, "w")
         for _ in all_datasets:
             f.write(_)
 
     # put them and the partial metadata in a dictionary
+    logger.info("parse metadata into dictionary")
     datasets_metadata = parse_output(all_datasets)
 
     queue = Queue.Queue()
     output_queue = Queue.Queue()
     # start the workers
+    logger.info("starting %d workers", options.workers)
+    workers = []
     for i in range(options.workers):
         w = Worker(queue, output_queue, options.site)
-        w.name = "worker %d" % i
         w.setDaemon(True)
+        workers.append(w)
         w.start()
     
-    logging.info("processing %d datasets" % len(datasets_metadata))
+    logger.info("processing %d datasets", len(datasets_metadata))
     start = time.time()
     # populate the queue
     if options.debug_small: datasets_metadata = datasets_metadata[:20]
@@ -185,8 +212,17 @@ if __name__ == "__main__":
     while not output_queue.empty():
         datasets_fullmetadata.append(output_queue.get())
 
-    logging.info("Elapsed Time: %s. Time per dataset: %s" % (stop - start, (stop-start) / len(datasets_fullmetadata)))
-    logging.info("%d dataset parsed" % len(datasets_fullmetadata))
+    logger.info("Elapsed Time: %s. Time per dataset: %s", stop - start, (stop-start) / len(datasets_fullmetadata))
+    logger.info("%d dataset(s) parsed", len(datasets_fullmetadata))
+    non_working = 0
+    for w in workers:
+        level = logger.info if w.ndone > 0 else logger.warning
+        level("worker %s: %d tasks processed", w.name, w.ndone)
+        if w.ndone < (0.5 * len(datasets_fullmetadata) / len(workers)):
+            non_working += 1
+    if non_working > 0:
+        logger.warning("%d workers are working less then half of the mean, consider to reduce the number of workers", non_working)
+
 
     # grouping result with user id
     datasets_fullmetadata = sorted(datasets_fullmetadata, key=itemgetter("owner"))
@@ -197,7 +233,7 @@ if __name__ == "__main__":
         groups.append(list(g))
         users_name.append(k)
 
-
+    logger.info("writing html for every user (it will be removed)")
     for i, (datasets_user,u) in enumerate(zip(groups, users_name)):
         user_filename = "%s_filelist_user%d.html" % (options.site, i)
         fuser = open(path.join(options.output_dir, user_filename), "w")
@@ -218,7 +254,7 @@ if __name__ == "__main__":
                 dataset_size = int(dd["size"])
                 byte_user += dataset_size
             except ValueError:
-                logging.error("size is not a number for user %s, dataset %s" % (u, dd))
+                logger.error("size is not a number for user %s, dataset %s" % (u, dd))
                 dataset_size = dd["size"]
             entry = "  <tr><td>%(name)s</td><td>%(size)s</td><td>%(creationdate)s</td></tr>\n" % {'name': dd["name"],
                                                                                                   'creationdate': dd["creationdate"],
@@ -232,6 +268,7 @@ if __name__ == "__main__":
 
     ###################################
     # remove the csv output
+    logger.info("computing csv output (it will be removed)")
     fieldnames = ["owner", "files", "size"]
     fcvs = open("data.csv", "wb")
     fcvs.write(",".join(fieldnames) + '\n')
@@ -247,13 +284,15 @@ if __name__ == "__main__":
         cvsWriter.writerow(row)
     ####################################
 
-
+    logger.info("generate xml output")
     xml = generate_xml(output_data, options.site)
 
     output_filename = "usage_%s_%s.xml" % (options.site, datetime.today().date().isoformat())
     output_complete_filename = path.join(options.output_dir, output_filename)
 
+    logger.info("writing xml output in %s", output_complete_filename)
     with open(output_complete_filename, "w") as f:
         f.write(xml)
 
     print output_complete_filename # this is the only output to stdout
+    logger.info("exiting")
