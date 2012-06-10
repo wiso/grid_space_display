@@ -74,6 +74,8 @@ class Worker(threading.Thread):
         logger.info("worker starting main loop")
         while True:
             i, dataset_metadata = self.queue.get()
+            if (self.ndone + 1) < 3:
+                logger.info("starting event %d", self.ndone + 1)
             with printing_lock:
                 print >> sys.stderr, "\rdataset %d\t(%s)  " % (i, self.name),
                 sys.stderr.flush()
@@ -82,7 +84,7 @@ class Worker(threading.Thread):
             m['creationdate'] = get_datetime(m['creationdate'])
             m['replica_creation'] = get_datetime(m['replica_creation'])
             self.ndone += 1
-            if self.ndone % 100 == 0:
+            if self.ndone % 100 == 0 or self.ndone < 3:
                 logger.info("done %d task" % self.ndone)
             self.out_queue.put(m)
             self.queue.task_done()
@@ -195,7 +197,7 @@ if __name__ == "__main__":
         workers.append(w)
         w.start()
     
-    logger.info("processing %d datasets", len(datasets_metadata))
+    logger.info("filling queue with %d datasets", len(datasets_metadata))
     start = time.time()
     # populate the queue
     if options.debug_small:
