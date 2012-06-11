@@ -36,10 +36,13 @@ d3.text("xml_list", function(list) {
     }
 	
     files_xml = list.split("\n");
+    files_xml = files_xml.filter(function f(d) {return !(d === '')});
+    console.log(files_xml);
     // download xmls
     var remaining_xml = files_xml.length;
     files_xml.map(function(d,i) {
 	d3.xml(d, function(xml) {
+	    if (xml == null) console.log("cannot load '" + d + "'");
 	    dataxml[i] = load_xml(xml);
 	    dataxml[i].map(function(d) { if (owners.indexOf(d.owner)<0) owners.push(d.owner); });
 	    if (!--remaining_xml) {
