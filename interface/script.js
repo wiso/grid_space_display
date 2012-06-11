@@ -102,6 +102,7 @@ function update(i)
 // load xml
 function load_xml(xml)
 {
+    if (xml==null) console.log("cannot load xml");
     var result = [];
     var xmlroot = xml.documentElement;
     var metadata = xmlroot.getElementsByTagName("metadata");
