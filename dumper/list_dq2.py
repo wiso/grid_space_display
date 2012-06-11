@@ -297,5 +297,6 @@ if __name__ == "__main__":
         f.write(xml)
 
     # this is the only output to stdout
-    print os.path.basename(output_complete_filename)
-    logger.info("exiting")
+    std_output = path.basename(output_complete_filename)
+    print std_output
+    logger.info("exiting with output %s", std_output)
