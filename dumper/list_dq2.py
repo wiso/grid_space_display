@@ -19,7 +19,7 @@ def generate_xml(data, sitename):
     impl = getDOMImplementation()
     newdoc = impl.createDocument(None, "DiskUsage", None)
     top_element = newdoc.documentElement
-    top_element.setAttribute("version", "0.1")
+    top_element.setAttribute("version", "0.2")
     top_element.setAttribute("creator", sys.argv[0])
     import socket
     top_element.setAttribute("host", socket.gethostname())
