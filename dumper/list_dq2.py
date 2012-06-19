@@ -89,9 +89,9 @@ class Worker(threading.Thread):
             i, dataset_metadata = self.queue.get()
             if (self.ndone + 1) < 3:
                 logger.info("starting event %d", self.ndone + 1)
-            with printing_lock:
-                print >> sys.stderr, "\rdataset %d\t(%s)  " % (i, self.name),
-                sys.stderr.flush()
+#            with printing_lock:
+#                print >> sys.stderr, "\rdataset %d\t(%s)  " % (i, self.name),
+#                sys.stderr.flush()
             m = get_metadata(dataset_metadata["name"], self.site)
             m.update(dataset_metadata)
             m['creationdate'] = get_datetime(m['creationdate'])
@@ -256,9 +256,10 @@ if __name__ == "__main__":
     output_data = []
     for user_name, userdata in zip(users_name, groups):
         row = {"owner": user_name,
-               "files": len(userdata),
+               "nfiles": len(userdata),
                "size": int(sum( (int(x["size"].strip()) if x["size"].strip().isdigit() else 0
-                                     for x in userdata) )/1024./1024.)}
+                                 for x in userdata) )/1024./1024.),
+               "filesinfo": userdata}
         output_data.append(row)
 
     logger.info("generate xml output")
