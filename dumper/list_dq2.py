@@ -6,7 +6,6 @@ import threading
 import Queue
 import sys
 import time
-import csv
 from xml.dom.minidom import getDOMImplementation
 from optparse import OptionParser
 import logging
@@ -14,6 +13,7 @@ from os import path
 
 printing_lock = threading.Lock()
 logger = None
+
 
 def generate_xml(data, sitename):
     impl = getDOMImplementation()
@@ -38,9 +38,21 @@ def generate_xml(data, sitename):
     for datum in data:
         owner_node = newdoc.createElement("owner")
         owner_node.setAttribute("name", datum["owner"])
-        owner_node.setAttribute("files", datum["files"].__str__())
+        owner_node.setAttribute("files", datum["nfiles"].__str__())
         owner_node.setAttribute("size", datum["size"].__str__())
         data_node.appendChild(owner_node)
+        files_info = datum["filesinfo"]
+        userfiles_node = newdoc.createElement("datasets")
+        userfiles_node.setAttribute('ndatasets', str(datum["nfiles"]))
+        userfiles_node.setAttribute('size', str(datum['size']))
+        for ff in files_info:
+            file_node = newdoc.createElement("dataset")
+            file_node.setAttribute('last_operation', ff['last_operation'].strip())
+            file_node.setAttribute('size', ff['size'].strip())
+            file_node.setAttribute('creationdate', str(ff['creationdate']).strip())
+            file_node.appendChild(newdoc.createTextNode(ff['name']))
+            userfiles_node.appendChild(file_node)
+        owner_node.appendChild(userfiles_node)
 
     return newdoc.toxml()
 
@@ -58,7 +70,8 @@ def get_datetime(s):
         logger.error("error converting string '%s' to datetime" % s)
         return datetime.fromtimestamp(0)
     except AttributeError:
-        logger.error("Attribute error converting string '%s' to datetime (python bug, see http://bugs.python.org/issue7980)" % s)
+        logger.error("Attribute error converting string '%s' to datetime"
+                     " (python bug, see http://bugs.python.org/issue7980)" % s)
         return datetime.fromtimestamp(0)
 
 class Worker(threading.Thread):
@@ -132,14 +145,17 @@ if __name__ == "__main__":
                           usage = usage)
     parser.add_option('--rerun', action='store_true', default=False, help='reuse the previous list of file')
     parser.add_option('--workers', type=int, help='# number of worker', default=70)
-    parser.add_option('--debug-small', action='store_true', default=False, help='run only on a small subsample (only for debugging)')
+    parser.add_option('--debug-small', action='store_true', default=False,
+                      help='run only on a small subsample (only for debugging)')
     parser.add_option('--output-dir', default=".", help='output directory to store the xml file')
     (options, args) = parser.parse_args()
 
     if (len(args) == 1):
         options.site = args[0]
     else:
-        raise ValueError("you need to specify the site (for example INFN-MILANO-ATLASC_LOCALGROUPDISK) as positional argument")
+        raise ValueError("you need to specify the site"
+                         " (for example INFN-MILANO-ATLASC_LOCALGROUPDISK)"
+                         " as positional argument")
 
     datetime_today = datetime.today()
 
@@ -214,7 +230,8 @@ if __name__ == "__main__":
     while not output_queue.empty():
         datasets_fullmetadata.append(output_queue.get())
 
-    logger.info("Elapsed Time: %s. Time per dataset: %s", stop - start, (stop-start) / len(datasets_fullmetadata))
+    logger.info("Elapsed Time: %s. Time per dataset: %s", stop - start,
+                (stop-start) / len(datasets_fullmetadata))
     logger.info("%d dataset(s) parsed", len(datasets_fullmetadata))
     non_working = 0
     for w in workers:
@@ -223,7 +240,8 @@ if __name__ == "__main__":
         if w.ndone < (0.5 * len(datasets_fullmetadata) / len(workers)):
             non_working += 1
     if non_working > 0:
-        logger.warning("%d workers are working less then half of the mean, consider to reduce the number of workers", non_working)
+        logger.warning("%d workers are working less then half of the mean, "
+                       "consider to reduce the number of workers", non_working)
 
 
     # grouping result with user id
@@ -235,56 +253,13 @@ if __name__ == "__main__":
         groups.append(list(g))
         users_name.append(k)
 
-    logger.info("writing html for every user (it will be removed)")
-    for i, (datasets_user, u) in enumerate(zip(groups, users_name)):
-        user_filename = "%s_filelist_user%d.html" % (options.site, i)
-        fuser = open(path.join(options.output_dir, user_filename), "w")
-        fuser.write("""
-<html>
-<head><title>{user} stastistics</title></head>
-<body>
-<h2>{user}</h2>
-<p>time: {time}</p>
-<table>
-""".format(user= u, time=datetime_today)
-                )
-        # loop over datasets for a user
-        byte_user = 0
-        for dd in sorted(datasets_user, key=itemgetter("creationdate")):
-            dataset_size = 0
-            try:
-                dataset_size = int(dd["size"])
-                byte_user += dataset_size
-            except ValueError:
-                logger.error("size is not a number for user %s, dataset %s" % (u, dd))
-                dataset_size = dd["size"]
-            entry = "  <tr><td>%(name)s</td><td>%(size)s</td><td>%(creationdate)s</td></tr>\n" % {'name': dd["name"],
-                                                                                                  'creationdate': dd["creationdate"],
-                                                                                                  'size': dataset_size}
-            fuser.write(entry)
-        fuser.write("""
-</table>
-</body>
-</html>
-""")
-
-    ###################################
-    # remove the csv output
-    logger.info("computing csv output (it will be removed)")
-    fieldnames = ["owner", "files", "size"]
-    fcvs = open("data.csv", "wb")
-    fcvs.write(",".join(fieldnames) + '\n')
-    cvsWriter = csv.DictWriter(fcvs, delimiter=',',
-                              quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
-    #cvsWriter.writeheader() # new in 2.7
     output_data = []
     for user_name, userdata in zip(users_name, groups):
         row = {"owner": user_name,
                "files": len(userdata),
-               "size": int(sum(map(lambda x: int(x["size"].strip()) if x["size"].strip().isdigit() else 0, userdata))/1024./1024.)}
+               "size": int(sum( (int(x["size"].strip()) if x["size"].strip().isdigit() else 0
+                                     for x in userdata) )/1024./1024.)}
         output_data.append(row)
-        cvsWriter.writerow(row)
-    ####################################
 
     logger.info("generate xml output")
     xml = generate_xml(output_data, options.site)
@@ -300,3 +275,4 @@ if __name__ == "__main__":
     std_output = path.basename(output_complete_filename)
     print std_output
     logger.info("exiting with output %s", std_output)
+
