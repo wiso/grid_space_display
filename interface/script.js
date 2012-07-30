@@ -110,7 +110,7 @@ function load_xml(xml)
     var xmlroot = xml.documentElement;
     var metadata = xmlroot.getElementsByTagName("metadata");
     var sitename = metadata[0].getElementsByTagName("sitename")[0].childNodes[0].nodeValue;
-    var datetime = metadata[0].childNodes[0].childNodes[0].nodeValue
+    var datetime = metadata[0].getElementsByTagName("time")[0].childNodes[0].nodeValue;
     var datetime_splitted = datetime.split(" ");
     var date_splitted = datetime_splitted[0].split("-");
     var time_splitted = datetime_splitted[1].split(":");
