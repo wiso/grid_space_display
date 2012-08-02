@@ -98,7 +98,7 @@ class Worker(threading.Thread):
             m['replica_creation'] = get_datetime(m['replica_creation'])
             self.ndone += 1
             if self.ndone % 100 == 0 or self.ndone < 3:
-                logger.info("done %d task" % self.ndone)
+                logger.info("done %d task", self.ndone)
             self.out_queue.put(m)
             self.queue.task_done()
 
@@ -245,7 +245,11 @@ if __name__ == "__main__":
 
 
     # grouping result with user id
-    datasets_fullmetadata = sorted(datasets_fullmetadata, key=itemgetter("owner"))
+    try:
+        datasets_fullmetadata = sorted(datasets_fullmetadata, key=itemgetter("owner"))
+    except KeyError:
+        logging.info("unexpected KeyError, dataset_fullmetadata is %s", str(dataset_fullmetadata))
+        raise
 
     groups = []
     users_name = []
