@@ -10,6 +10,8 @@ from xml.dom.minidom import getDOMImplementation
 from optparse import OptionParser
 import logging
 from os import path
+from math import sqrt
+import random
 
 printing_lock = threading.Lock()
 logger = None
@@ -145,6 +147,7 @@ if __name__ == "__main__":
                           usage = usage)
     parser.add_option('--rerun', action='store_true', default=False, help='reuse the previous list of file')
     parser.add_option('--workers', type=int, help='# number of worker', default=70)
+    parser.add_option('--random-workers', action='store_true', default=False, help="use a random number of workes: gaus(N, sqrt(N)) where N is the workers argument")
     parser.add_option('--debug-small', action='store_true', default=False,
                       help='run only on a small subsample (only for debugging)')
     parser.add_option('--output-dir', default=".", help='output directory to store the xml file')
@@ -205,9 +208,14 @@ if __name__ == "__main__":
     queue = Queue.Queue()
     output_queue = Queue.Queue()
     # start the workers
-    logger.info("starting %d workers", options.workers)
+    nworkers = options.workers
+    if (options.random_workers):
+        nworkers = random.gauss(options.workers, sqrt(options.workers))
+        nworkers = int(max(options.workers / 2., nworkers))
+    
+    logger.info("starting %d workers", nworkers)
     workers = []
-    for i in range(options.workers):
+    for i in range(nworkers):
         w = Worker(queue, output_queue, options.site)
         w.setDaemon(True)
         workers.append(w)
