@@ -232,14 +232,14 @@ if __name__ == "__main__":
     # sit and wait
     queue.join()
     stop = time.time()
+    logger.info("Elapsed Time: %s s (%s min). Time per dataset: %s", stop - start, (stop - start) / 60.
+                (stop-start) / len(datasets_fullmetadata))
 
     # there is not better way to do it?
     datasets_fullmetadata = []
     while not output_queue.empty():
         datasets_fullmetadata.append(output_queue.get())
-
-    logger.info("Elapsed Time: %s. Time per dataset: %s", stop - start,
-                (stop-start) / len(datasets_fullmetadata))
+    
     logger.info("%d dataset(s) parsed", len(datasets_fullmetadata))
     non_working = 0
     for w in workers:
