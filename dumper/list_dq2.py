@@ -232,8 +232,8 @@ if __name__ == "__main__":
     # sit and wait
     queue.join()
     stop = time.time()
-    logger.info("Elapsed Time: %s s (%s min). Time per dataset: %s", stop - start, (stop - start) / 60.
-                (stop-start) / len(datasets_fullmetadata))
+    logger.info("Elapsed Time: %s s (%s min). Time per dataset: %s", stop - start, (stop - start) / 60.,
+                (stop-start) / len(datasets_metadata))
 
     # there is not better way to do it?
     datasets_fullmetadata = []
