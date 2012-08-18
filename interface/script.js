@@ -37,7 +37,7 @@ d3.text("xml_list", function(list) {
 	
     files_xml = list.split("\n");
     files_xml = files_xml.filter(function f(d) {return !(d === '')});
-    console.log(files_xml);
+    console_log(files_xml);
     // download xmls
     var remaining_xml = files_xml.length;
     files_xml.map(function(d,i) {
@@ -45,6 +45,7 @@ d3.text("xml_list", function(list) {
 	    if (xml == null) console.log("cannot load '" + d + "'");
 	    dataxml[i] = load_xml(xml);
 	    dataxml[i].map(function(d) { if (owners.indexOf(d.owner)<0) owners.push(d.owner); });
+	    d3.select("#sitename").text("Downloading " + remaining_xml + "/" + files_xml.length);	    
 	    if (!--remaining_xml) {
 		add_missing_owners(dataxml, owners);
 		d3.select("#sitename").text(get_sitename(dataxml) + " usage");
@@ -340,8 +341,7 @@ function draw_stack()
     
     // y ticks
     totalGb_round = (totalGb / 100.).toFixed() * 100;
-    console_log(totalGb);
-    console_log(totalGb_round);
+
     var y = d3.scale.linear().domain([0, totalGb_round]).range([0, hpath]);
     vis_stack.append("svg:g").attr("class", "labels").selectAll("yticks").data(d3.range(0,totalGb_round, totalGb_round/10)).enter().append("line")
 	.attr("y1", function(d,i) { return y(d); })
