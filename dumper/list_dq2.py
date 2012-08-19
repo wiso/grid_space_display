@@ -336,7 +336,7 @@ if __name__ == "__main__":
     for user_name, userdata in zip(users_name, groups):
         row = {"owner": user_name,
                "nfiles": len(userdata),
-               "size": sum((x["datasetsize"] for x in userdata if x["datasetsize"]))/1024./1024.,
+               "size": int(sum((x["datasetsize"] for x in userdata if x["datasetsize"]))/1024./1024.),
                "filesinfo": userdata}
         output_data.append(row)
 
