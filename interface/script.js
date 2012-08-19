@@ -45,7 +45,7 @@ d3.text("xml_list", function(list) {
 	    if (xml == null) console.log("cannot load '" + d + "'");
 	    dataxml[i] = load_xml(xml);
 	    dataxml[i].map(function(d) { if (owners.indexOf(d.owner)<0) owners.push(d.owner); });
-	    d3.select("#sitename").text("Downloading " + remaining_xml + "/" + files_xml.length);	    
+	    d3.select("#sitename").text("Downloading " + (files_xml.length - remaining_xml + 1) + "/" + files_xml.length);	    
 	    if (!--remaining_xml) {
 		add_missing_owners(dataxml, owners);
 		d3.select("#sitename").text(get_sitename(dataxml) + " usage");
