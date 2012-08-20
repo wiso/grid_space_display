@@ -13,6 +13,8 @@ from xml.dom.minidom import getDOMImplementation
 from optparse import OptionParser
 import logging
 
+
+
 from os import path
 from math import sqrt
 import random
@@ -23,6 +25,8 @@ use_dq2get_api = True
 try:
     from dq2.popularity.client.popularityClient import popularityClient
     from dq2.clientapi.DQ2 import DQ2
+    logging.shutdown()
+    reload(logging)
 except ImportError:
     use_dq2get_api = False
 
