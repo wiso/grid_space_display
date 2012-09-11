@@ -122,9 +122,20 @@ function load_xml(xml)
     for (var i=0; i<owners_xml.length; ++i)
     {
 	var userdata = owners_xml[i];
-	result.push({"owner": userdata.getAttribute("name"),
-		     "files": userdata.getAttribute("files"),
-		     "size": userdata.getAttribute("size")});
+	var user_result = {"owner": userdata.getAttribute("name"),
+			   "files": userdata.getAttribute("files"),
+			   "size": userdata.getAttribute("size")};
+	dataset_container = userdata.getElementsByTagName("datasets");
+	if (dataset_container.length) {
+	    datasets = dataset_container[0].getElementsByTagName("dataset");
+	    var user_datasets = [];
+	    for (var j=0; j<datasets.length; ++j) {
+		dataset_name = datasets[j].childNodes[0].nodeValue;
+		user_datasets.push(dataset_name);
+	    }
+	    user_result["datasets"] = user_datasets;
+	}
+    result.push(user_result);
     }
     result.sitename = sitename;
     result.time = time;
@@ -171,7 +182,7 @@ function tabulate(data, columns) {
 	.data(function(row, i) {
 	    return columns.map(function(column) {
 		if (column == "owner")
-                    return {column: column, value: '<a href=\"' + sitename + '_filelist_user' + i + '.html\">' + row[column] + '</a>'};
+                    return {column: column, value: '<a href=\"javascript:show_userfiles(' + i + ')\">' + row[column] + '</a>'};
 		else return {column: column, value: row[column]};
 	    });
 	})
@@ -558,3 +569,31 @@ function textTween(d, i) {
     };
 }
 
+function show_userfiles(i) {
+    data_user = dataxml[dataxml.length - 1][i];
+    console.log(data_user);
+
+    newWindow = window.open('');
+    var newWindowRoot = d3.select(newWindow.document.body);
+
+    newWindowRoot.append('h1')
+    .text(data_user.owner);
+
+    var table = newWindowRoot.append('table');
+    var thead = table.append("thead");
+    var tbody = table.append("tbody");
+    var columns = ["dataset"];
+
+    thead.append("tr")
+	.selectAll("th")
+	.data(columns)
+	.enter()
+	.append("th")
+	.text(function(column) { return column; });
+
+    var rows = tbody.selectAll('tr')
+	.data(data_user.datasets)
+	.enter().append('tr').append('td')
+	.text(function(d) { return d; });
+
+}
