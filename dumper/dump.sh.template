@@ -13,10 +13,11 @@ if [ $? = "0" ]
     echo proxy already exists
 else
     echo creating proxy
-    echo password | voms-proxy-init -voms atlas -pwstdin
+    echo your_grid_password | voms-proxy-init -voms atlas -pwstdin
 fi
 
 # run dumper
 INTERFACE_DIR= # absolute path to interface dir
-OUTPUT=`python list_dq2.py --output-dir=$INTERFACE_DIR INFN-MILANO-ATLASC_LOCALGROUPDISK`
+OUTPUT=`python fullpath/list_dq2.py --workers 80 --random-workers --output-dir=$INTERFACE_DIR INFN-MILANO-ATLASC_LOCALGROUPDISK 2> error.log`
 echo $OUTPUT >> $INTERFACE_DIR/xml_list
+mv $INTERFACE_DIR/$OUTPUT $INTERFACE_DIR
