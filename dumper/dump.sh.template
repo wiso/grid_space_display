@@ -1,11 +1,11 @@
 #!/bin/sh
 
 # configure vo-proxy with password
-export LFC_HOST=lfc.cr.cnaf.infn.it
-export VO_ATLAS_SW_DIR=/opt/exp_software/atlas
-source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
-source /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/setup.sh
+export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
+localSetupROOT --skipConfirm
 export DQ2_LOCAL_SITE_ID=INFN-MILANO-ATLASC_LOCALGROUPDISK
+
 echo "look if proxy exists"
 voms-proxy-info -exists
 if [ $? = "0" ]
