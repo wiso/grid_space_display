@@ -1,7 +1,7 @@
 from stat import S_ISREG, ST_CTIME, ST_MODE
 import os
-import time
 import subprocess
+
 
 def list_xmlfiles(dirpath):
     entries = (os.path.join(dirpath, fn) for fn in os.listdir(dirpath))
@@ -11,11 +11,16 @@ def list_xmlfiles(dirpath):
     entries = sorted(entries, key=lambda path: os.stat(path)[ST_CTIME])
     return entries
 
+
 def isslimmed(f):
     return False
 
+
 def slim(filename):
-    subprocess.call(["xsltproc", "slim.xslt", filename, "-o", filename])
+    from os import path
+    current_dir = path.dirname(path.realpath(__file__))
+    arg_call = ["xsltproc", "-o", filename, path.join(current_dir, "slim.xslt"), filename]
+    subprocess.call(arg_call)
 
 if __name__ == "__main__":
     from optparse import OptionParser
