@@ -7,7 +7,8 @@ import urllib2
 
 # TODO: solve this
 import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
+if hasattr(ssl, '_create_default_https_context'):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 Gb = 1024. ** 3
 Tb = 1024. ** 4
@@ -96,7 +97,7 @@ def valid_date(s):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Dump storage usage.')
-    parser.add_argument('--rse', default="INFN-MILANO-ATLASC_LOCALGROUPDISK")
+    parser.add_argument('--rse')
     parser.add_argument('--yesterday', action='store_true')
     parser.add_argument('--ndays', type=int, default=1)
     parser.add_argument('--start', type=valid_date, help='start date, format= YYYY-MM-DD')
