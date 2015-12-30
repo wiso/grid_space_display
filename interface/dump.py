@@ -4,6 +4,9 @@ import pandas as pd
 import logging
 import datetime
 import urllib2
+import sys
+
+logging.basicConfig(level=logging.INFO)
 
 # TODO: solve this
 import ssl
@@ -20,11 +23,12 @@ def group_by_owner(data):
     result.columns = ['ndatasets'] + list(result.columns)[1:]
     return result
 
+
 def get_data(rse, date, **kwargs):
     datestr = date.strftime('%d-%m-%Y')
     url = "https://rucio-hadoop.cern.ch/consistency_datasets?rse=%s&date=%s" % (rse, datestr)
-    print url
     return to_pandas(url, dateformat='ms' if date >= datetime.datetime(2015, 7, 31) else 'string', **kwargs)
+
 
 def to_pandas(filename, dateformat='ms', noderived=False):
     def conv(s):
@@ -39,19 +43,19 @@ def to_pandas(filename, dateformat='ms', noderived=False):
         return s
     try:
         if noderived:
-            data =  pd.read_csv(filename, sep='\t', header=None,
-                                converters={3: conv},
-                                usecols=[0,1,2,3,4]
-                                )
+            data = pd.read_csv(filename, sep='\t', header=None,
+                               converters={3: conv},
+                               usecols=[0,1,2,3,4]
+                              )
             data.columns = ["RSE", "scope", "name", "owner", "size"]
         else:
             if dateformat == 'ms':
                 names = ("RSE", "scope", "name", "owner", "size", "creation_date", "last_accessed_date")
-                data =  pd.read_csv(filename, sep='\t', header=None,
-                                    parse_dates=["creation_date", "last_accessed_date"],
-                                    date_parser=lambda _:pd.to_datetime(float(_), unit='ms'),
-                                    converters={"owner": conv},
-                                    names=names)
+                data = pd.read_csv(filename, sep='\t', header=None,
+                                   parse_dates=["creation_date", "last_accessed_date"],
+                                   date_parser=lambda _:pd.to_datetime(float(_), unit='ms'),
+                                   converters={"owner": conv},
+                                   names=names)
 
             elif dateformat == 'string':
                 names = ("RSE", "scope", "name", "owner", "size", "creation_date", "last_accessed_date")
@@ -75,17 +79,12 @@ def to_pandas(filename, dateformat='ms', noderived=False):
 
 
 def fetch_safe(date, rse):
-    try:
-        d = get_data(rse, date, noderived=True)
-        do = group_by_owner(d)
-        do = do.reset_index()
-        do['timestamp'] = date
-        return do
-    except urllib2.HTTPError:
-        pass
-    except:
-        print "problem parsing data for %s" % date
-        raise
+    d = get_data(rse, date, noderived=True)
+    do = group_by_owner(d)
+    do = do.reset_index()
+    do['timestamp'] = date
+    return do
+
 
 def valid_date(s):
     try:
@@ -102,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument('--ndays', type=int, default=1)
     parser.add_argument('--start', type=valid_date, help='start date, format= YYYY-MM-DD')
     parser.add_argument('--end', type=valid_date, help='end date, format= YYYY-MM-DD')
-    parser.add_argument('--nquery', type=int, help='number of concurrent query', default=20)
+    parser.add_argument('--nquery', type=int, help='number of concurrent query', default=50)
     args = parser.parse_args()
 
     if args.rse is None:
@@ -120,19 +119,90 @@ if __name__ == "__main__":
     elif args.end is not None and args.ndays is not None:
         datelist = pd.date_range(end=args.end, periods=args.ndays).tolist()
 
-
-    print datelist
     import multiprocessing.dummy
+    from multiprocessing.dummy import Lock
 
     p = multiprocessing.dummy.Pool(args.nquery)
+
+    class Monitor(object):
+        def __init__(self, ntotal):
+            self.nrunning = 0
+            self.ndone = 0
+            self.nerror = 0
+            self.ntotal = ntotal
+            self.msg_errors = []
+            self.edit_lock = Lock()
+            self.writing_lock = Lock()
+            self.display()
+
+        def start(self):
+            with self.edit_lock:
+                self.nrunning += 1
+                self.display()
+
+        def done(self):
+            with self.edit_lock:
+                self.ndone += 1
+                self.nrunning -= 1
+                self.display()
+
+        def error(self, msg=None):
+            with self.edit_lock:
+                self.nerror += 1
+                self.nrunning -= 1
+                self.ndone += 1
+                if msg is not None:
+                    self.msg_errors.append(msg)
+                self.display()
+
+        def display(self):
+            msg = "\r{} ({})/{} errors: {}".format(self.ndone, self.nrunning, self.ntotal, self.nerror)
+            with self.writing_lock:
+                sys.stdout.write('\r' + ' '*len(msg))
+                sys.stdout.flush()
+                sys.stdout.write(msg)
+                sys.stdout.flush()
+
+        def close(self):
+            print
+            print "list of errors"
+            for msg in self.msg_errors:
+                print msg
+
     from functools import partial
-    datas_owner = p.map(partial(fetch_safe, rse=args.rse), datelist)
+
+    monitor = Monitor(len(datelist))
+
+    def wrap_monitor(f):
+        def w(*args, **kwargs):
+            monitor.start()
+            try:
+                result = f(*args, **kwargs)
+                monitor.done()
+                return result
+            except Exception as ex:
+                msg = ex.msg
+                if isinstance(ex, urllib2.HTTPError):
+                    msg = "code %s for url %s" % (ex.code, ex.url)
+                monitor.error(msg)
+        return w
+
+    fmap = wrap_monitor(partial(fetch_safe, rse=args.rse))
+    datas_owner = p.map(fmap, datelist)
+    monitor.close()
 
     from pandas.io.pytables import HDFStore
     store = HDFStore('store.h5')
 
     for date, data in zip(datelist, datas_owner):
+        if data is None:
+            logging.warning("no data returned for %s" % date)
+            continue
         store[date.strftime('userdata_%d%m%Y')] = data
-    print store
     store.close()
-    print store
+
+    logging.info("trying to open output")
+    store = HDFStore('store.h5')
+    for k in store.keys():
+        print store.get(k)
+    store.close()
