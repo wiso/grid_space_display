@@ -32,14 +32,12 @@ def get_data(rse, date, **kwargs):
 
 def to_pandas(filename, dateformat='ms', noderived=False):
     def conv(s):
-        if "panda" in s:
-            s = s.replace("panda,", "").replace(",panda", "")
-        if "root" in s:
-            s = s.replace("root,", "").replace(",root", "")
-        if "," in s:
-            items = s.split(",")
-            if len(set(items)) == 1:
-                s = items[0]
+        s = set(s.split(','))
+        to_remove = 'panda', 'root'
+        for name in to_remove:
+            if name in s:
+                s.remove(name)
+        s = ','.join(s)
         return s
     try:
         if noderived:
@@ -60,13 +58,13 @@ def to_pandas(filename, dateformat='ms', noderived=False):
             elif dateformat == 'string':
                 names = ("RSE", "scope", "name", "owner", "size", "creation_date", "last_accessed_date")
 
-                data =  pd.read_csv(filename, sep='\t', header=None,
-                                    parse_dates=['creation_date', 'last_accessed_date'],
-                                    converters={"owner": conv},
-                                    names=names)
+                data = pd.read_csv(filename, sep='\t', header=None,
+                                   parse_dates=['creation_date', 'last_accessed_date'],
+                                   converters={"owner": conv},
+                                   names=names)
     except Exception as ex:
         if type(ex) != urllib2.HTTPError:
-            print "cannot parse file from %s" % filename
+            print "cannot parse file from %s: %s" % (filename, str(ex.msg))
         raise
 
     if not noderived:
@@ -82,7 +80,6 @@ def fetch_safe(date, rse):
     d = get_data(rse, date, noderived=True)
     do = group_by_owner(d)
     do = do.reset_index()
-    do['timestamp'] = date
     return do
 
 
@@ -102,6 +99,7 @@ if __name__ == "__main__":
     parser.add_argument('--start', type=valid_date, help='start date, format= YYYY-MM-DD')
     parser.add_argument('--end', type=valid_date, help='end date, format= YYYY-MM-DD')
     parser.add_argument('--nquery', type=int, help='number of concurrent query', default=50)
+    parser.add_argument('--overwrite', action='store_true')
     args = parser.parse_args()
 
     if args.rse is None:
@@ -118,6 +116,8 @@ if __name__ == "__main__":
         datelist = pd.date_range(start=args.start, periods=args.ndays).tolist()
     elif args.end is not None and args.ndays is not None:
         datelist = pd.date_range(end=args.end, periods=args.ndays).tolist()
+
+    logging.info("dumping from %s to %s", datelist[0], datelist[-1])
 
     import multiprocessing.dummy
     from multiprocessing.dummy import Lock
@@ -168,12 +168,11 @@ if __name__ == "__main__":
             print "list of errors"
             for msg in self.msg_errors:
                 print msg
+            print
 
     from functools import partial
 
-    monitor = Monitor(len(datelist))
-
-    def wrap_monitor(f):
+    def wrap_monitor(f, monitor):
         def w(*args, **kwargs):
             monitor.start()
             try:
@@ -181,28 +180,44 @@ if __name__ == "__main__":
                 monitor.done()
                 return result
             except Exception as ex:
-                msg = ex.msg
+                msg = str(ex)
                 if isinstance(ex, urllib2.HTTPError):
                     msg = "code %s for url %s" % (ex.code, ex.url)
                 monitor.error(msg)
         return w
 
-    fmap = wrap_monitor(partial(fetch_safe, rse=args.rse))
-    datas_owner = p.map(fmap, datelist)
+    def wrap_write(f, storage, overwrite=False):
+        def w(date, *args, **kwargs):
+            key = date.strftime('userdata_%d%m%Y')
+            if not overwrite and key in storage:
+                return
+            value = f(date, *args, **kwargs)
+            if value is not None:
+                store[key] = value
+                print value
+        return w
+
+    monitor = Monitor(len(datelist))
+    from pandas import HDFStore
+    store = HDFStore('store.h5', complevel=9)
+    fmap = wrap_monitor(wrap_write(partial(fetch_safe, rse=args.rse), store, overwrite=args.overwrite),
+                        monitor)
+    p.map(fmap, datelist)
     monitor.close()
-
-    from pandas.io.pytables import HDFStore
-    store = HDFStore('store.h5')
-
-    for date, data in zip(datelist, datas_owner):
-        if data is None:
-            logging.warning("no data returned for %s" % date)
-            continue
-        store[date.strftime('userdata_%d%m%Y')] = data
     store.close()
 
     logging.info("trying to open output")
     store = HDFStore('store.h5')
+    data = []
     for k in store.keys():
-        print store.get(k)
+        try:
+            d = store.get(k)
+            d['timestamp'] = pd.to_datetime(k.split("_")[1], format='%d%m%Y')
+            data.append(d)
+        except Exception as e:
+            print "Problem reading", k
+            print e
     store.close()
+    data = pd.concat(data)
+
+    print data.timestamp.min(), data.timestamp.max()
