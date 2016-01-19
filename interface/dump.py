@@ -5,6 +5,9 @@ import logging
 import datetime
 import urllib2
 import sys
+import json
+import cufflinks as cf
+cf.go_offline()
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,6 +18,17 @@ if hasattr(ssl, '_create_default_https_context'):
 
 Gb = 1024. ** 3
 Tb = 1024. ** 4
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        """If input object is an ndarray it will be converted into a dict
+        holding dtype, shape and the data, base64 encoded.
+        """
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder(self, obj)
 
 def group_by_owner(data):
     default_actions = {'owner':'count', 'life_days': 'mean', 'age_days': 'mean', 'last_accessed_days': 'mean', 'size': lambda x: np.sum(x) / Tb}
@@ -204,6 +218,7 @@ if __name__ == "__main__":
                         monitor)
     p.map(fmap, datelist)
     monitor.close()
+
     store.close()
 
     logging.info("trying to open output")
@@ -219,5 +234,14 @@ if __name__ == "__main__":
             print e
     store.close()
     data = pd.concat(data)
+    data = data.set_index(['timestamp', 'owner'])
 
-    print data.timestamp.min(), data.timestamp.max()
+    data_to_plot = data['size'].unstack().fillna(0)
+    dataplot = data_to_plot.iplot(kind='area', fill=True, asFigure=True)
+    for d in dataplot['data']:
+        d['hoverinfo'] = 'text+x+name'
+        d['text'] = ["%.2f Gb" % xx for xx in data_to_plot[d['name']].tolist()]
+    data.iplot(data=dataplot['data'])
+    f_json_data = open('data.json', 'w')
+    json_data = json.dump(dataplot['data'], f_json_data, cls=NumpyEncoder)
+    f_json_data.close()
