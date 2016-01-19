@@ -32,12 +32,23 @@ store.close()
 data = pd.concat(data)
 data = data.set_index(['timestamp', 'owner'])
 
-# stack plot
+# no-stack plot
 data_to_plot = data['size'].unstack().fillna(0)
 dataplot = data_to_plot.iplot(kind='scatter', fill=True, asFigure=True)
 data.iplot(data=dataplot['data'])
 
 f_json_data = open('data_scatter.json', 'w')
+json_data = json.dump(dataplot['data'], f_json_data, cls=NumpyEncoder)
+f_json_data.close()
+
+# stack-plot
+data_to_plot = data['size'].unstack().fillna(0)
+dataplot = data_to_plot.iplot(kind='area', fill=True, asFigure=True)
+for d in dataplot['data']:
+    d['hoverinfo'] = 'text+x+name'
+    d['text'] = ["%.2f Tb" % xx for xx in data_to_plot[d['name']].tolist()]
+data.iplot(data=dataplot['data'])
+f_json_data = open('data.json', 'w')
 json_data = json.dump(dataplot['data'], f_json_data, cls=NumpyEncoder)
 f_json_data.close()
 
