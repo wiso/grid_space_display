@@ -1,26 +1,121 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Disk usage on grid space token</title>
-    <script src="http://mbostock.github.com/d3/d3.min.js?2.8.1"></script>
-<!--     <script src="d3.v2.js"></script>-->
-    <link type="text/css" rel="stylesheet" href="stat_style.css"/>    
-  </head>
-  <body>
-    <h1 id="sitename">Waiting...</h1>
-    <div id="charts">
-      <div id="stackchart" style="float:left"></div>
-      <div id="piechart"></div>
-    </div>
-    <div>
-      <div id="summarytable"></div>
-    </div>
-    <div id="footer">
-      Powered by
-      <a href="http://mbostock.github.com/d3">d3.js</a>
-      by R. Turra
-    </div>
-    <script src="script.js"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <title>Disk usage on grid space token</title>
+  <link type="text/css" rel="stylesheet" href="stat_style.css"/>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+</head>
+<body>
+
+
+  <div id="charts">
+     <div id="stackchart" style="float:left"></div>
+     <div id="piechart" style="float:right"></div>
+   </div>
+   <div>
+     <div id="summarytable">
+       <table id="myTable" class="hor-minimalist-b">
+         <thead>
+           <tr>
+             <th>owner</th>
+             <th></th>
+           </tr>
+         </thead>
+         <tbody>
+         </tbody>
+       </table>
+     </div>
+   </div>
+   <div id="footer">
+     Powered by
+     <a href="https://plot.ly/">plot.ly</a>
+     by R. Turra
+   </div>
+  <script>
+
+      $( document ).ready(function() {
+
+        var layout = {"autosize":true,"yaxis":{"tickfont":{"color":"#4D5663"},"title":"Size [TB]","showgrid":true,"zerolinecolor":"#E1E5ED","range":[-9.715140206434072,184.58766392224732],"gridcolor":"#E1E5ED","titlefont":{"color":"#4D5663"},"type":"linear","autorange":true},"paper_bgcolor":"#F5F6F9","plot_bgcolor":"#F5F6F9","titlefont":{"color":"#4D5663"},"xaxis":{"tickfont":{"color":"#4D5663"},"title":"","showgrid":true,"zerolinecolor":"#E1E5ED","range":[1420671600000,1451430000000],"gridcolor":"#E1E5ED","titlefont":{"color":"#4D5663"},"type":"date","autorange":true},"hovermode":"closest","legend":{"bgcolor":"#F5F6F9","font":{"color":"#4D5663"}},"showlegend":false};
+        var layout_pie = {"autosize":true,"yaxis":{"tickfont":{"color":"#4D5663"},"title":"Size [TB]","showgrid":true,"zerolinecolor":"#E1E5ED","range":[86.43626185790662,88.43626185790662],"gridcolor":"#E1E5ED","titlefont":{"color":"#4D5663"},"type":"linear","autorange":true},"paper_bgcolor":"#F5F6F9","plot_bgcolor":"#F5F6F9","showlegend":false,"titlefont":{"color":"#4D5663"},"xaxis":{"tickfont":{"color":"#4D5663"},"title":"","showgrid":true,"zerolinecolor":"#E1E5ED","range":[1436050799999,1436050800001],"gridcolor":"#E1E5ED","titlefont":{"color":"#4D5663"},"type":"date","autorange":true},"hovermode":"closest","legend":{"bgcolor":"#F5F6F9","font":{"color":"#4D5663"}},"annotations":[{"text":"TB","showarrow":false,"xanchor":"center","yanchor":"middle","xref":"paper","yref":"paper","font":{"size":20,"color":"rgb(102, 102, 102)"}}]};
+        var layout_single = {"autosize":false,"yaxis":{"tickfont":{"color":"#4D5663"},"title":"","showgrid":true,"zerolinecolor":"#E1E5ED","range":[0,1.263423159516127],"gridcolor":"#E1E5ED","titlefont":{"color":"#4D5663"},"type":"linear","autorange":true,"showticklabels":false,"fixedrange":true},"paper_bgcolor":"rgb(245, 246, 249)","plot_bgcolor":"#F5F6F9","titlefont":{"color":"#4D5663"},"xaxis":{"tickfont":{"color":"#4D5663"},"title":"","showgrid":true,"zerolinecolor":"#E1E5ED","range":[1420671600000,1451430000000],"gridcolor":"#E1E5ED","titlefont":{"color":"#4D5663"},"type":"date","autorange":true,"showticklabels":false,"fixedrange":true},"legend":{"bgcolor":"#F5F6F9","font":{"color":"#4D5663"}},"height":40,"width":300,"margin":{"l":10,"r":10,"t":10,"b":10,"pad":0,"autoexpand":true},"separators":".,"};
+
+        $.getJSON("data.json", function(data) {
+          (function() {
+
+          var WIDTH_IN_PERCENT_OF_PARENT = 60,
+              HEIGHT_IN_PERCENT_OF_PARENT = 80;
+
+          var gd3 = d3.select('#stackchart')
+              .style({
+                  width: WIDTH_IN_PERCENT_OF_PARENT + '%',
+                  //'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
+
+                  height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh'
+                  //'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
+              });
+
+          var gd = gd3.node();
+
+          Plotly.plot(gd, data, layout);
+
+          })();
+        });
+
+        $.getJSON("data_scatter.json", function(data) {
+          $.each( data, function( key, val ) {
+            $("#myTable").find('tbody')
+              .append($('<tr>')
+                .append($('<td>').append(val['name']))
+                .append($('<td>').append($('<div>').attr('id', 'plot_' + key)))
+            );
+
+              Plotly.newPlot('plot_' + key, [val], layout_single);
+            });
+        });
+
+        $.getJSON("data_pie.json", function(data) {
+          var sum = data[0]["values"].reduce(add, 0);
+
+          function add(a, b) {
+            return a + b;
+          }
+          layout_pie["annotations"][0]['text'] = sum.toFixed(1) + " Tb";
+
+          (function() {
+
+          var WIDTH_IN_PERCENT_OF_PARENT = 40,
+              HEIGHT_IN_PERCENT_OF_PARENT = 80;
+
+          var gd3 = d3.select('#piechart')
+              .style({
+                  width: WIDTH_IN_PERCENT_OF_PARENT + '%',
+                  //'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
+
+                  height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh'
+                  //'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
+              });
+
+          var gd = gd3.node();
+
+          Plotly.plot(gd, data, layout_pie);
+
+          })();
+
+          window.onresize = function() {
+            var gd_pie = d3.select('#piechart').node();
+            var gd_stack = d3.select('#stackchart').node();
+            Plotly.Plots.resize(gd_pie);
+            Plotly.Plots.resize(gd_stack);
+           };
+
+
+        });
+
+
+      });
+  </script>
+
+</body>
 </html>
