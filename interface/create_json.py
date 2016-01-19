@@ -44,7 +44,7 @@ f_json_data.close()
 # pie plot
 latest_data = data[data.index.get_level_values('timestamp') == data.index.get_level_values('timestamp').max()]
 dataplot = latest_data.reset_index().iplot(kind='pie', labels='owner', values='size', hole='0.4', sort=True, textinfo='percent', asFigure=True)
-dataplot['data'][0]['text'] = ["%.2f Gb" % xx for xx in dataplot['data'][0]['values']]
+dataplot['data'][0]['text'] = ["%.2f Tb" % xx for xx in dataplot['data'][0]['values']]
 dataplot['data'][0]['hoverinfo'] = 'text+label'
 data.iplot(data=dataplot['data'])
 
