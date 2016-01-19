@@ -240,7 +240,7 @@ if __name__ == "__main__":
     dataplot = data_to_plot.iplot(kind='area', fill=True, asFigure=True)
     for d in dataplot['data']:
         d['hoverinfo'] = 'text+x+name'
-        d['text'] = ["%.2f Gb" % xx for xx in data_to_plot[d['name']].tolist()]
+        d['text'] = ["%.2f Tb" % xx for xx in data_to_plot[d['name']].tolist()]
     data.iplot(data=dataplot['data'])
     f_json_data = open('data.json', 'w')
     json_data = json.dump(dataplot['data'], f_json_data, cls=NumpyEncoder)
