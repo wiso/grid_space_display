@@ -32,7 +32,7 @@ store.close()
 data = pd.concat(data)
 data = data.set_index(['timestamp', 'owner'])
 
-# no-stack plot
+# stack plot
 data_to_plot = data['size'].unstack().fillna(0)
 dataplot = data_to_plot.iplot(kind='scatter', fill=True, asFigure=True)
 data.iplot(data=dataplot['data'])
@@ -41,21 +41,10 @@ f_json_data = open('data_scatter.json', 'w')
 json_data = json.dump(dataplot['data'], f_json_data, cls=NumpyEncoder)
 f_json_data.close()
 
-# stack-plot
-data_to_plot = data['size'].unstack().fillna(0)
-dataplot = data_to_plot.iplot(kind='area', fill=True, asFigure=True)
-for d in dataplot['data']:
-    d['hoverinfo'] = 'text+x+name'
-    d['text'] = ["%.2f Tb" % xx for xx in data_to_plot[d['name']].tolist()]
-data.iplot(data=dataplot['data'])
-f_json_data = open('data.json', 'w')
-json_data = json.dump(dataplot['data'], f_json_data, cls=NumpyEncoder)
-f_json_data.close()
-
 # pie plot
 latest_data = data[data.index.get_level_values('timestamp') == data.index.get_level_values('timestamp').max()]
 dataplot = latest_data.reset_index().iplot(kind='pie', labels='owner', values='size', hole='0.4', sort=True, textinfo='percent', asFigure=True)
-dataplot['data'][0]['text'] = ["%.2f Tb" % xx for xx in dataplot['data'][0]['values']]
+dataplot['data'][0]['text'] = ["%.2f Gb" % xx for xx in dataplot['data'][0]['values']]
 dataplot['data'][0]['hoverinfo'] = 'text+label'
 data.iplot(data=dataplot['data'])
 
