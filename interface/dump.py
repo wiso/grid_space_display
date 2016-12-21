@@ -104,12 +104,15 @@ def valid_date(s):
         msg = "Not a valid date: '{0}'.".format(s)
         raise argparse.ArgumentTypeError(msg)
 
+from multiprocessing.dummy import Lock
+write_lock = Lock()
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Dump storage usage.')
     parser.add_argument('--rse')
     parser.add_argument('--yesterday', action='store_true')
-    parser.add_argument('--ndays', type=int, default=1)
+    parser.add_argument('--ndays', type=int, default=1, help='numer of days to dump, default=1')
     parser.add_argument('--start', type=valid_date, help='start date, format= YYYY-MM-DD')
     parser.add_argument('--end', type=valid_date, help='end date, format= YYYY-MM-DD')
     parser.add_argument('--nquery', type=int, help='number of concurrent query', default=50)
@@ -131,10 +134,12 @@ if __name__ == "__main__":
     elif args.end is not None and args.ndays is not None:
         datelist = pd.date_range(end=args.end, periods=args.ndays).tolist()
 
+    if len(datelist) == 0:
+        raise ValueError("date range not valid")
+
     logging.info("dumping from %s to %s", datelist[0], datelist[-1])
 
     import multiprocessing.dummy
-    from multiprocessing.dummy import Lock
 
     p = multiprocessing.dummy.Pool(args.nquery)
 
@@ -200,6 +205,7 @@ if __name__ == "__main__":
                 monitor.error(msg)
         return w
 
+
     def wrap_write(f, storage, overwrite=False):
         def w(date, *args, **kwargs):
             key = date.strftime('userdata_%d%m%Y')
@@ -207,8 +213,9 @@ if __name__ == "__main__":
                 return
             value = f(date, *args, **kwargs)
             if value is not None:
-                store[key] = value
-                print value
+                with write_lock:
+                    storage[key] = value
+                    print value
         return w
 
     monitor = Monitor(len(datelist))
@@ -218,12 +225,13 @@ if __name__ == "__main__":
                         monitor)
     p.map(fmap, datelist)
     monitor.close()
-
+    logging.info("closing file")
     store.close()
 
     logging.info("trying to open output")
     store = HDFStore('store.h5')
     data = []
+
     for k in store.keys():
         try:
             d = store.get(k)

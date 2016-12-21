@@ -1,6 +1,0 @@
-<?xml version="1.0" ?><DiskUsage creator="list_dq2.py" version="0.1"><!--NO WARRANTY--><metadata><time>2012-03-20 20:14:54.250052</time><sitename>INFN-MILANO-ATLASC_LOCALGROUPDISK</sitename></metadata><data>
-<owner files="20" name="/O=foogrid/O=users/O=foonet/CN=foo" size="128388"/>
-<owner files="30" name="/O=bargrid/O=users/O=barnet/CN=bar" size="188388"/>
-<owner files="40" name="/O=bazgrid/O=users/O=baznet/CN=baz" size="158388"/>
-<owner files="50" name="/O=quxgrid/O=users/O=quxnet/CN=qux" size="508388"/>
-</data></DiskUsage>
