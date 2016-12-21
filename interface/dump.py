@@ -1,3 +1,5 @@
+# to compress: ptrepack --chunkshape=auto --propindexes --complevel=9 --complib=blosc store.h5 c.h5
+
 import numpy as np
 import pandas as pd
 # WARNING for pandas >=0.17: https://github.com/pydata/pandas/issues/11786
