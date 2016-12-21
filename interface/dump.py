@@ -215,6 +215,7 @@ if __name__ == "__main__":
             if value is not None:
                 with write_lock:
                     storage[key] = value
+                    storage.flush(fsync=True)
                     print value
         return w
 
