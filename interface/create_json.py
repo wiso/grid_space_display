@@ -4,9 +4,10 @@ import cufflinks as cf
 import numpy as np
 import pandas as pd
 from pandas.io.pytables import HDFStore
+import plotly.express as px
+
 
 cf.go_offline()
-
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -18,7 +19,6 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         # Let the base class default method raise the TypeError
         return json.JSONEncoder(self, obj)
-
 
 
 store = HDFStore("store.h5")
@@ -38,12 +38,19 @@ data = pd.concat(data)
 data = data.set_index(["timestamp", "owner"])
 
 # stack plot
-data_to_plot = data["size"].unstack().fillna(0)
-dataplot = data_to_plot.iplot(kind="scatter", fill=True, asFigure=True)
-data.iplot(data=dataplot["data"])
+data_to_plot = data.groupby(level=[0, 1])["size"].sum()
+index_sorting = data_to_plot.groupby(level=1).sum().sort_values(ascending=False).index.to_list()
+category_order = {"owner": index_sorting}
+fig = px.area(
+    data_to_plot.reset_index(),
+    x="timestamp",
+    y="size",
+    color="owner",
+    category_orders=category_order,
+)
 
-with open("data.json", "w") as f_json_data:
-    plt_json = dataplot.to_json(validate=True, pretty=True)
+with open("data.json", "w", encoding="utf-8") as f_json_data:
+    plt_json = fig.to_json(validate=True, pretty=True)
     f_json_data.write(plt_json)
 
 # pie plot
@@ -64,6 +71,6 @@ dataplot["data"][0]["hoverinfo"] = "text+label"
 data.iplot(data=dataplot["data"])
 
 
-with open("data_pie.json", "w") as f_json_data:
+with open("data_pie.json", "w", encoding="utf-8") as f_json_data:
     plt_json = dataplot.to_json(pretty=True)
     f_json_data.write(plt_json)
