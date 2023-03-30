@@ -39,7 +39,58 @@
 
     $(document).ready(function () {
 
-      var layout = { "autosize": true, "yaxis": { "tickfont": { "color": "#4D5663" }, "title": "Size [TB]", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [-9.715140206434072, 184.58766392224732], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "linear", "autorange": true }, "paper_bgcolor": "#F5F6F9", "plot_bgcolor": "#F5F6F9", "titlefont": { "color": "#4D5663" }, "xaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [1420671600000, 1451430000000], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "date", "autorange": true }, "hovermode": "closest", "legend": { "bgcolor": "#F5F6F9", "font": { "color": "#4D5663" } }, "showlegend": false };
+      var layout = {
+        "autosize": true,
+        "yaxis": {
+          "tickfont": {
+            "color": "#4D5663"
+          },
+          "title": "Size [TB]",
+          "showgrid": true,
+          "zerolinecolor": "#E1E5ED",
+          "range": [
+            -9.715140206434072,
+            184.58766392224732
+          ],
+          "gridcolor": "#E1E5ED",
+          "titlefont": {
+            "color": "#4D5663"
+          },
+          "type": "linear",
+          "autorange": true
+        },
+        "paper_bgcolor": "#F5F6F9",
+        "plot_bgcolor": "#F5F6F9",
+        "titlefont": {
+          "color": "#4D5663"
+        },
+        "xaxis": {
+          "tickfont": {
+            "color": "#4D5663"
+          },
+          "title": "",
+          "showgrid": true,
+          "zerolinecolor": "#E1E5ED",
+          "range": [
+            1420671600000,
+            1451430000000
+          ],
+          "gridcolor": "#E1E5ED",
+          "titlefont": {
+            "color": "#4D5663"
+          },
+          "type": "date",
+          "autorange": true
+        },
+        "hovermode": "closest",
+        "legend": {
+          "bgcolor": "#F5F6F9",
+          "font": {
+            "color": "#4D5663"
+          }
+        },
+        "showlegend": false
+      };
       var layout_pie = { "autosize": true, "yaxis": { "tickfont": { "color": "#4D5663" }, "title": "Size [TB]", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [86.43626185790662, 88.43626185790662], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "linear", "autorange": true }, "paper_bgcolor": "#F5F6F9", "plot_bgcolor": "#F5F6F9", "showlegend": false, "titlefont": { "color": "#4D5663" }, "xaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [1436050799999, 1436050800001], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "date", "autorange": true }, "hovermode": "closest", "legend": { "bgcolor": "#F5F6F9", "font": { "color": "#4D5663" } }, "annotations": [{ "text": "TB", "showarrow": false, "xanchor": "center", "yanchor": "middle", "xref": "paper", "yref": "paper", "font": { "size": 20, "color": "rgb(102, 102, 102)" } }] };
       var layout_single = { "autosize": false, "yaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [0, 1.263423159516127], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "linear", "autorange": true, "showticklabels": false, "fixedrange": true }, "paper_bgcolor": "rgb(245, 246, 249)", "plot_bgcolor": "#F5F6F9", "titlefont": { "color": "#4D5663" }, "xaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [1420671600000, 1451430000000], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "date", "autorange": true, "showticklabels": false, "fixedrange": true }, "legend": { "bgcolor": "#F5F6F9", "font": { "color": "#4D5663" } }, "height": 40, "width": 300, "margin": { "l": 10, "r": 10, "t": 10, "b": 10, "pad": 0, "autoexpand": true }, "separators": ".," };
 
@@ -59,13 +110,15 @@
             });
 
           var gd = gd3.node();
-
+          data = data["data"];
+          console.log(data);
           Plotly.plot(gd, data, layout);
 
         })();
       });
 
       $.getJSON("data_scatter.json", function (data) {
+
         $.each(data, function (key, val) {
           $("#myTable").find('tbody')
             .append($('<tr>')
@@ -101,6 +154,7 @@
             });
 
           var gd = gd3.node();
+          data = data["data"];
 
           Plotly.plot(gd, data, layout_pie);
 
