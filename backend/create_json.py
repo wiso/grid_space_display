@@ -10,17 +10,6 @@ import plotly.express as px
 cf.go_offline()
 
 
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        """If input object is an ndarray it will be converted into a dict
-        holding dtype, shape and the data, base64 encoded.
-        """
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder(self, obj)
-
-
 store = HDFStore("store.h5")
 
 data = []
