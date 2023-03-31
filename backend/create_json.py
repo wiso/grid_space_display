@@ -1,11 +1,7 @@
-import json
-
 import cufflinks as cf
-import numpy as np
 import pandas as pd
-from pandas.io.pytables import HDFStore
 import plotly.express as px
-
+from pandas.io.pytables import HDFStore
 
 cf.go_offline()
 
