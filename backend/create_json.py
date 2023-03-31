@@ -1,3 +1,5 @@
+import json
+
 import cufflinks as cf
 import pandas as pd
 import plotly.express as px
@@ -7,9 +9,12 @@ cf.go_offline()
 
 
 store = HDFStore("store.h5")
+keys = list(store.keys())
+if not keys:
+    raise IOError("store is empty")
 
 data = []
-for k in list(store.keys()):
+for k in keys:
     try:
         d = store.get(k)
         d["timestamp"] = pd.to_datetime(k.split("_")[1], format="%d%m%Y")
@@ -39,9 +44,8 @@ with open("data.json", "w", encoding="utf-8") as f_json_data:
     f_json_data.write(plt_json)
 
 # pie plot
-latest_data = data[
-    data.index.get_level_values("timestamp") == data.index.get_level_values("timestamp").max()
-]
+latest_data = data.loc[data.index.get_level_values("timestamp").max()]
+
 dataplot = latest_data.reset_index().iplot(
     kind="pie",
     labels="owner",
@@ -59,3 +63,16 @@ data.iplot(data=dataplot["data"])
 with open("data_pie.json", "w", encoding="utf-8") as f_json_data:
     plt_json = dataplot.to_json(pretty=True)
     f_json_data.write(plt_json)
+
+
+# scatter plot
+
+json_merged = {}
+for k, df_v in data.groupby(level=1):
+    plot = df_v.droplevel(1).reindex(data.index.levels[0])['size'].iplot(kind='bar', asFigure=True)
+    json_str = plot.to_json(validate=True, pretty=True)
+    my_dict = json.loads(json_str)
+    json_merged[k] = my_dict
+
+with open('data_scatter.json', 'w', encoding='utf-8') as f:
+    json.dump(json_merged, f, indent=4)

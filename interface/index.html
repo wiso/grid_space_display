@@ -114,20 +114,29 @@
           Plotly.plot(gd, data, layout);
 
         })();
-      });
+      })
+        .fail(function (jqxhr, textStatus, error) {
+          var err = textStatus + ", " + error;
+          console.log("Request Failed: " + err);
+        });
+
 
       $.getJSON("data_scatter.json", function (data) {
-
         $.each(data, function (key, val) {
           $("#myTable").find('tbody')
             .append($('<tr>')
-              .append($('<td>').append(val['name']))
+              .append($('<td>').append(key))
               .append($('<td>').append($('<div>').attr('id', 'plot_' + key)))
             );
 
-          Plotly.newPlot('plot_' + key, [val], layout_single);
+          Plotly.newPlot('plot_' + key, val['data'], layout_single);
         });
-      });
+      })
+        .fail(function (jqxhr, textStatus, error) {
+          var err = textStatus + ", " + error;
+          console.log("Request Failed: " + err);
+        });
+
 
       $.getJSON("data_pie.json", function (data) {
         var sum = data["data"][0]["values"].reduce(add, 0);
