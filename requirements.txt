@@ -2,4 +2,4 @@ numpy
 pandas
 cufflinks
 plotly
-pytables
+tables
