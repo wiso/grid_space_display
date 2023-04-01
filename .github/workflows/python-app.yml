@@ -48,7 +48,7 @@ jobs:
         echo "Finished at $(date)"
     - name: Deploy to s3
       run: |
-        apt get s3lib
+        apt-get install -y s3lib
         s3 --version
         export S3_HOSTNAME=rgw.fisica.unimi.it
         touch x.txt
