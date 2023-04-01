@@ -46,5 +46,11 @@ jobs:
         backend/create_json.py
         ls -l
         echo "Finished at $(date)"
-
+    - name: Deploy to s3
+      run: |
+        pip install awscli
+        s3 --version
+        export S3_HOSTNAME=rgw.fisica.unimi.it
+        touch x.txt
+        s3 put localgroupdisk-data/x.txt filename=x.txt
     
