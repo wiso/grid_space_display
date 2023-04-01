@@ -57,24 +57,23 @@ latest_data = data[
     data.index.get_level_values("timestamp") == data.index.get_level_values("timestamp").max()
 ].reset_index()
 
-latest_data.loc[latest_data['size'] < latest_data['size'].sum() / 100, 'owner'] = 'Others'
+latest_data.loc[latest_data["size"] < latest_data["size"].sum() / 100, "owner"] = "Others"
 
 
-fig = px.pie(latest_data.reset_index(), values='size', names='owner', hole=.4)
+fig = px.pie(latest_data.reset_index(), values="size", names="owner", hole=0.4)
 
 with open("data_pie.json", "w", encoding="utf-8") as f_json_data:
     plt_json = fig.to_json(pretty=True)
     f_json_data.write(plt_json)
 
-"""
+
 logging.info("doing scatter plot")
 json_merged = {}
 for k, df_v in data.groupby(level=1):
-    plot = df_v.droplevel(1).reindex(data.index.levels[0])["size"].iplot(kind="bar", asFigure=True)
+    plot = px.scatter(df_v.reset_index(), x="timestamp", y="size")
     json_str = plot.to_json(validate=True, pretty=True)
     my_dict = json.loads(json_str)
     json_merged[k] = my_dict
 
 with open("data_scatter.json", "w", encoding="utf-8") as f:
     json.dump(json_merged, f, indent=4)
-"""
