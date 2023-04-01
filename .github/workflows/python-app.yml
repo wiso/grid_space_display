@@ -48,6 +48,7 @@ jobs:
         echo "Finished at $(date)"
     - name: Deploy to s3
       run: |
+        sudo apt-get update
         sudo apt-get install -y libs3
         s3 --version
         export S3_HOSTNAME=rgw.fisica.unimi.it
