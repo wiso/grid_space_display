@@ -34,7 +34,7 @@ jobs:
         ls -l
         echo "Started at $(date)"
         echo "Downloading database dump"
-        backend/dump.py --start 2023-01-01 --end 2023-03-30 --overwrite
+        backend/dump.py --start 2023-01-01 --end $(date +%Y-%m-%d) --overwrite
         ls -l
         echo "Finished at $(date)"
     - name: Analyze
