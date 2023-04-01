@@ -48,9 +48,14 @@ jobs:
         echo "Finished at $(date)"
     - name: Deploy to s3
       run: |
-        sudo apt-get install -y s3lib
+        sudo apt-get install -y libs3
         s3 --version
         export S3_HOSTNAME=rgw.fisica.unimi.it
         touch x.txt
         s3 put localgroupdisk-data/x.txt filename=x.txt
+      env:
+        S3_HOSTNAME: rgw.fisica.unimi.it
+        S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+        S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+
     
