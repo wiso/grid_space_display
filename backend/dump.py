@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # to compress: ptrepack --chunkshape=auto --propindexes --complevel=9 --complib=blosc store.h5 c.h5
 
 import datetime
