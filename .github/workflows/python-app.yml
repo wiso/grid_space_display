@@ -50,8 +50,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libs3-2
-        s3 --version
-        export S3_HOSTNAME=rgw.fisica.unimi.it
         touch x.txt
         s3 put localgroupdisk-data/x.txt filename=x.txt
       env:
