@@ -3,13 +3,11 @@
 import json
 import logging
 
-import cufflinks as cf
 import pandas as pd
 import plotly.express as px
 from pandas.io.pytables import HDFStore
 
 logging.basicConfig(level=logging.INFO)
-cf.go_offline()
 
 
 logging.info("opening data")

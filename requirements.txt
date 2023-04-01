@@ -3,4 +3,3 @@ pandas
 cufflinks
 plotly
 tables
-chart_studio
