@@ -86,7 +86,6 @@
 
 
       $.getJSON('https://rgw.fisica.unimi.it/localgroupdisk-data/data_all.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=gjVmqhBEKRN2tZPd8cvUfDsm8eQ%3D&Expires=1689163855', function (data) {
-        console.log(data);
         var table = $('#table_datasets').DataTable({
           orderCellsTop: true,
           fixedHeader: true,
