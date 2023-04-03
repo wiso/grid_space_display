@@ -76,12 +76,15 @@ def to_pandas(filename, dateformat="ms", noderived=False):
                     "size",
                     "creation_date",
                     "last_accessed_date",
+                    "rule_id",
+                    "n_replicas",
+                    "update_date"
                 )
                 data = pd.read_csv(
                     filename,
                     sep="\t",
                     header=None,
-                    parse_dates=["creation_date", "last_accessed_date"],
+                    parse_dates=["creation_date", "last_accessed_date", "update_date"],
                     date_parser=lambda _: pd.to_datetime(float(_), unit="ms"),
                     converters={"owner": conv},
                     names=names,
