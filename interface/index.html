@@ -3,20 +3,52 @@
 
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Disk usage on grid space token</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
   <link type="text/css" rel="stylesheet" href="stat_style.css" />
+  <link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/v/bs5/dt-1.13.4/datatables.min.css" />
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <script src="https://cdn.datatables.net/v/bs5/dt-1.13.4/datatables.min.js"></script>
 </head>
 
 <body>
+
+  <header>
+    <nav class="navbar bg-body-secondary navbar-expand-lg" data-bs-theme="dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">Disk space usage for INFN-MILANO-ATLASC_LOCALGROUPDISK</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a href="https://github.com/wiso/grid_space_display" class="nav-link">Code</a>
+            </li>
+
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+
+    </div>
+  </header>
+
 
   <div id="charts">
     <div id="stackchart" style="float:left"></div>
     <div id="piechart" style="float:right"></div>
   </div>
   <div>
+    <!--
     <div id="summarytable">
       <table id="myTable" class="hor-minimalist-b">
         <thead>
@@ -30,157 +62,265 @@
       </table>
     </div>
   </div>
-  <div id="footer">
-    Powered by
-    <a href="https://plot.ly/">plot.ly</a>
-    by R. Turra
-  </div>
-  <script>
+-->
 
-    $(document).ready(function () {
+    <table id="table_datasets" border="1" style="width:100%" class="table table-striped">
+      <thead>
+        <tr>
+          <th>Scope</th>
+          <th>Owner</th>
+          <th>Name</th>
+          <th>Size</th>
+          <th>Creation</th>
+          <th>Last accessed</th>
+        </tr>
+      </thead>
+      <tbody>
 
-      var layout = {
-        "autosize": true,
-        "yaxis": {
-          "tickfont": {
-            "color": "#4D5663"
-          },
-          "title": "Size [TB]",
-          "showgrid": true,
-          "zerolinecolor": "#E1E5ED",
-          "range": [
-            -9.715140206434072,
-            184.58766392224732
+      </tbody>
+    </table>
+
+    <script type="text/javascript">
+    $('#table_datasets thead tr').clone(true).addClass('filters').appendTo( '#table_datasets thead' );
+
+
+
+      $.getJSON('data_all.json', function (data) {
+        console.log(data);
+        var table = $('#table_datasets').DataTable({
+          orderCellsTop: true,
+          fixedHeader: true,
+          searching: true,
+          dom: 'rtip',
+          "lengthChange": false,
+          data: data,
+          scrollX: true,
+          scrollY: "50vh",
+          scrollCollapse: true,
+          ordering: true,
+          "pageLength": 30,
+          columns: [
+            { data: 'scope' },
+            { data: 'owner' },
+            { data: 'name' },
+            { data: 'size' },
+            { data: 'creation_date' },
+            { data: 'last_accessed_date' }
           ],
-          "gridcolor": "#E1E5ED",
+
+          initComplete: function() {
+            var api = this.api();
+            // For each column
+            api.columns().eq(0).each(function(colIdx) {
+                // Set the header cell to contain the input element
+                var cell = $('.filters th').eq($(api.column(colIdx).header()).index());
+                var title = $(cell).text();
+                $(cell).html( '<input type="text" placeholder="'+title+'" />' );
+                // On every keypress in this input
+                $('input', $('.filters th').eq($(api.column(colIdx).header()).index()) )
+                    .off('keyup change')
+                    .on('keyup change', function (e) {
+                        e.stopPropagation();
+                        // Get the search value
+                        $(this).attr('title', $(this).val());
+                        var regexr = '({search})'; //$(this).parents('th').find('select').val();
+                        var cursorPosition = this.selectionStart;
+                        // Search the column for that value
+                        api
+                            .column(colIdx)
+                            .search((this.value != "") ? regexr.replace('{search}', '((('+this.value+')))') : "", this.value != "", this.value == "")
+                            .draw();
+                        $(this).focus()[0].setSelectionRange(cursorPosition, cursorPosition);
+                    });
+            });
+        },
+
+
+        });
+      });
+    </script>
+
+    <footer class="footer mt-auto pt-3 bg-body-secondary text-center text-lg-start" data-bs-theme="dark">
+      <div class="container">
+        <span class="text-light">
+          <p> Powered by
+            <a href="https://plot.ly/">plot.ly</a>
+            by R. Turra
+          </p>
+        </span>
+      </div>
+    </footer>
+    <script>
+
+      $(document).ready(function () {
+
+        var layout = {
+          "autosize": true,
+          "yaxis": {
+            "tickfont": {
+              "color": "#4D5663"
+            },
+            "title": "Size [TB]",
+            "showgrid": true,
+            "zerolinecolor": "#E1E5ED",
+            "range": [
+              -9.715140206434072,
+              184.58766392224732
+            ],
+            "gridcolor": "#E1E5ED",
+            "titlefont": {
+              "color": "#4D5663"
+            },
+            "type": "linear",
+            "autorange": true
+          },
+          "paper_bgcolor": "#F5F6F9",
+          "plot_bgcolor": "#F5F6F9",
           "titlefont": {
             "color": "#4D5663"
           },
-          "type": "linear",
-          "autorange": true
-        },
-        "paper_bgcolor": "#F5F6F9",
-        "plot_bgcolor": "#F5F6F9",
-        "titlefont": {
-          "color": "#4D5663"
-        },
-        "xaxis": {
-          "tickfont": {
-            "color": "#4D5663"
+          "xaxis": {
+            "tickfont": {
+              "color": "#4D5663"
+            },
+            "title": "",
+            "showgrid": true,
+            "zerolinecolor": "#E1E5ED",
+            "range": [
+              1420671600000,
+              1451430000000
+            ],
+            "gridcolor": "#E1E5ED",
+            "titlefont": {
+              "color": "#4D5663"
+            },
+            "type": "date",
+            "autorange": true
           },
-          "title": "",
-          "showgrid": true,
-          "zerolinecolor": "#E1E5ED",
-          "range": [
-            1420671600000,
-            1451430000000
-          ],
-          "gridcolor": "#E1E5ED",
-          "titlefont": {
-            "color": "#4D5663"
+          "hovermode": "closest",
+          "legend": {
+            "bgcolor": "#F5F6F9",
+            "font": {
+              "color": "#4D5663"
+            }
           },
-          "type": "date",
-          "autorange": true
-        },
-        "hovermode": "closest",
-        "legend": {
-          "bgcolor": "#F5F6F9",
-          "font": {
-            "color": "#4D5663"
-          }
-        },
-        "showlegend": false
-      };
-      var layout_pie = { "autosize": true, "yaxis": { "tickfont": { "color": "#4D5663" }, "title": "Size [TB]", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [86.43626185790662, 88.43626185790662], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "linear", "autorange": true }, "paper_bgcolor": "#F5F6F9", "plot_bgcolor": "#F5F6F9", "showlegend": false, "titlefont": { "color": "#4D5663" }, "xaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [1436050799999, 1436050800001], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "date", "autorange": true }, "hovermode": "closest", "legend": { "bgcolor": "#F5F6F9", "font": { "color": "#4D5663" } }, "annotations": [{ "text": "TB", "showarrow": false, "xanchor": "center", "yanchor": "middle", "xref": "paper", "yref": "paper", "font": { "size": 20, "color": "rgb(102, 102, 102)" } }] };
-      var layout_single = { "autosize": false, "yaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [0, 1.263423159516127], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "linear", "autorange": true, "showticklabels": false, "fixedrange": true }, "paper_bgcolor": "rgb(245, 246, 249)", "plot_bgcolor": "#F5F6F9", "titlefont": { "color": "#4D5663" }, "xaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [1420671600000, 1451430000000], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "date", "autorange": true, "showticklabels": false, "fixedrange": true }, "legend": { "bgcolor": "#F5F6F9", "font": { "color": "#4D5663" } }, "height": 40, "width": 300, "margin": { "l": 10, "r": 10, "t": 10, "b": 10, "pad": 0, "autoexpand": true }, "separators": ".," };
-
-      $.getJSON('https://rgw.fisica.unimi.it/localgroupdisk-data/data.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=ZKxl9tvt71PRKAB76%2FFhB914aBE%3D&Expires=1688888444', function (data) {
-        (function () {
-
-          var WIDTH_IN_PERCENT_OF_PARENT = 60,
-            HEIGHT_IN_PERCENT_OF_PARENT = 80;
-
-          var gd3 = d3.select('#stackchart')
-            .style({
-              width: WIDTH_IN_PERCENT_OF_PARENT + '%',
-              //'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
-
-              height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh'
-              //'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
-            });
-
-          var gd = gd3.node();
-          data = data["data"];
-          Plotly.plot(gd, data, layout);
-
-        })();
-      })
-        .fail(function (jqxhr, textStatus, error) {
-          var err = textStatus + ", " + error;
-          console.log("Request Failed: " + err);
-        });
-
-
-      $.getJSON("https://rgw.fisica.unimi.it/localgroupdisk-data/data_scatter.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=%2BH1BJhI%2BoOyaAjEFWci6uPGgazQ%3D&Expires=1688891789", function (data) {
-        $.each(data, function (key, val) {
-          $("#myTable").find('tbody')
-            .append($('<tr>')
-              .append($('<td>').append(key))
-              .append($('<td>').append($('<div>').attr('id', 'plot_' + key)))
-            );
-
-          Plotly.newPlot('plot_' + key, val['data'], layout_single);
-        });
-      })
-        .fail(function (jqxhr, textStatus, error) {
-          var err = textStatus + ", " + error;
-          console.log("Request Failed: " + err);
-        });
-
-
-      $.getJSON("https://rgw.fisica.unimi.it/localgroupdisk-data/data_pie.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=zw13YoesLxy8tdVfnd7BEmPJqHw%3D&Expires=1688891751", function (data) {
-        var sum = data["data"][0]["values"].reduce(add, 0);
-
-        function add(a, b) {
-          return a + b;
-        }
-        layout_pie["annotations"][0]['text'] = sum.toFixed(1) + " Tb";
-
-
-        (function () {
-
-          var WIDTH_IN_PERCENT_OF_PARENT = 40,
-            HEIGHT_IN_PERCENT_OF_PARENT = 80;
-
-          var gd3 = d3.select('#piechart')
-            .style({
-              width: WIDTH_IN_PERCENT_OF_PARENT + '%',
-              //'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
-
-              height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh'
-              //'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
-            });
-
-          var gd = gd3.node();
-          data = data["data"];
-
-          Plotly.plot(gd, data, layout_pie);
-
-        })();
-
-        window.onresize = function () {
-          var gd_pie = d3.select('#piechart').node();
-          var gd_stack = d3.select('#stackchart').node();
-          Plotly.Plots.resize(gd_pie);
-          Plotly.Plots.resize(gd_stack);
+          "showlegend": true
         };
+        var layout_pie = {
+          "autosize": true,
+          "yaxis": {
+            "tickfont": { "color": "#4D5663" },
+            "title": "Size [TB]", "showgrid": true,
+            "zerolinecolor": "#E1E5ED", "range": [86.43626185790662, 88.43626185790662],
+            "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "linear", "autorange": true
+          }, "paper_bgcolor": "#F5F6F9", "plot_bgcolor": "#F5F6F9",
+          "showlegend": true,
+          "titlefont": { "color": "#4D5663" },
+          "xaxis": {
+            "tickfont": { "color": "#4D5663" },
+            "title": "", "showgrid": true,
+            "zerolinecolor": "#E1E5ED", "range": [1436050799999, 1436050800001],
+            "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "date", "autorange": true
+          }, "hovermode": "closest",
+          "legend": { "bgcolor": "#F5F6F9", "font": { "color": "#4D5663" } },
+          "annotations": [{
+            "text": "TB", "showarrow": false, "xanchor": "center",
+            "yanchor": "middle", "xref": "paper",
+            "yref": "paper", "font": { "size": 20, "color": "rgb(102, 102, 102)" }
+          }]
+        };
+        var layout_single = { "displayModeBar": false, "autosize": false, "yaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [0, 1.263423159516127], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "linear", "autorange": true, "showticklabels": false, "fixedrange": true }, "paper_bgcolor": "rgb(245, 246, 249)", "plot_bgcolor": "#F5F6F9", "titlefont": { "color": "#4D5663" }, "xaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [1420671600000, 1451430000000], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "date", "autorange": true, "showticklabels": false, "fixedrange": true }, "legend": { "bgcolor": "#F5F6F9", "font": { "color": "#4D5663" } }, "height": 40, "width": 300, "margin": { "l": 10, "r": 10, "t": 10, "b": 10, "pad": 0, "autoexpand": true }, "separators": ".," };
+
+        $.getJSON('https://rgw.fisica.unimi.it/localgroupdisk-data/data.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=ZKxl9tvt71PRKAB76%2FFhB914aBE%3D&Expires=1688888444', function (data) {
+          (function () {
+
+            var WIDTH_IN_PERCENT_OF_PARENT = 60,
+              HEIGHT_IN_PERCENT_OF_PARENT = 80;
+
+            var gd3 = d3.select('#stackchart')
+              .style({
+                width: WIDTH_IN_PERCENT_OF_PARENT + '%',
+                //'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
+
+                height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh'
+                //'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
+              });
+
+            var gd = gd3.node();
+            data = data["data"];
+            Plotly.plot(gd, data, layout);
+
+          })();
+        })
+          .fail(function (jqxhr, textStatus, error) {
+            var err = textStatus + ", " + error;
+            console.log("Request Failed: " + err);
+          });
+
+        /*
+              $.getJSON("https://rgw.fisica.unimi.it/localgroupdisk-data/data_scatter.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=%2BH1BJhI%2BoOyaAjEFWci6uPGgazQ%3D&Expires=1688891789", function (data) {
+                $.each(data, function (key, val) {
+                  $("#myTable").find('tbody')
+                    .append($('<tr>')
+                      .append($('<td>').append(key))
+                      .append($('<td>').append($('<div>').attr('id', 'plot_' + key)))
+                    );
+        
+                  Plotly.newPlot('plot_' + key, val['data'], layout_single);
+                });
+              })
+                .fail(function (jqxhr, textStatus, error) {
+                  var err = textStatus + ", " + error;
+                  console.log("Request Failed: " + err);
+                });
+               */
+
+        $.getJSON("https://rgw.fisica.unimi.it/localgroupdisk-data/data_pie.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=zw13YoesLxy8tdVfnd7BEmPJqHw%3D&Expires=1688891751", function (data) {
+          var sum = data["data"][0]["values"].reduce(add, 0);
+
+          function add(a, b) {
+            return a + b;
+          }
+          layout_pie["annotations"][0]['text'] = sum.toFixed(1) + " Tb";
+
+
+          (function () {
+
+            var WIDTH_IN_PERCENT_OF_PARENT = 40,
+              HEIGHT_IN_PERCENT_OF_PARENT = 80;
+
+            var gd3 = d3.select('#piechart')
+              .style({
+                width: WIDTH_IN_PERCENT_OF_PARENT + '%',
+                //'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
+
+                height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh'
+                //'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
+              });
+
+            var gd = gd3.node();
+            console.log(data);
+
+            Plotly.plot(gd, data["data"], layout_pie);
+
+          })();
+
+          window.onresize = function () {
+            var gd_pie = d3.select('#piechart').node();
+            var gd_stack = d3.select('#stackchart').node();
+            Plotly.Plots.resize(gd_pie);
+            Plotly.Plots.resize(gd_stack);
+          };
+
+
+        });
 
 
       });
-
-
-    });
-  </script>
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N"
+      crossorigin="anonymous"></script>
 
 </body>
 
