@@ -10,6 +10,7 @@ Tool to visualize the space used by each user of a grid space token, as localgro
 To test the web page locally, run:
 
 ```
+cd interface
 python -m http.server 8080
 ```
 
