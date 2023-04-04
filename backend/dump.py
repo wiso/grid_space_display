@@ -274,7 +274,7 @@ if __name__ == "__main__":
 
     logging.info("dumping latest day")
     last_date = max(datelist)
-    latest_dataset = get_data(args.rse, last_date, noderived=True)
+    latest_dataset = get_data(args.rse, last_date, noderived=False)
     latest_dataset.to_json("data_all.json", orient='records', date_format='iso')
 
     store.close()
