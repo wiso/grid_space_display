@@ -55,9 +55,11 @@ jobs:
         s3 delete localgroupdisk-data/data.json
         s3 delete localgroupdisk-data/data_scatter.json
         s3 delete localgroupdisk-data/data_pie.json
+        s3 delete localgroupdisk-data/data_all.json
         s3 put localgroupdisk-data/data.json filename=data.json
         s3 put localgroupdisk-data/data_scatter.json filename=data_scatter.json
         s3 put localgroupdisk-data/data_pie.json filename=data_pie.json
+        s3 put localgroupdisk-data/data_all.json filename=data_all.json
       env:
         S3_HOSTNAME: rgw.fisica.unimi.it
         S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}

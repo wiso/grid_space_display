@@ -271,4 +271,10 @@ if __name__ == "__main__":
         pool.map(fmap, datelist)
     monitor.close()
     logging.info("closing file")
+
+    logging.info("dumping latest day")
+    last_date = max(datelist)
+    latest_dataset = get_data(args.rse, last_date, noderived=True)
+    latest_dataset.to_json("data_all.json", orient='records', date_format='iso')
+
     store.close()
