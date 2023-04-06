@@ -271,10 +271,16 @@ if __name__ == "__main__":
         pool.map(fmap, datelist)
     monitor.close()
     logging.info("closing file")
+    store.close()
 
     logging.info("dumping latest day")
-    last_date = max(datelist)
-    latest_dataset = get_data(args.rse, last_date, noderived=False)
-    latest_dataset.to_json("data_all.json", orient='records', date_format='iso')
+    for date in reversed(sorted(datelist)):
+        logging.info("trying downloading %s", date)
+        try:
+            latest_dataset = get_data(args.rse, date, noderived=False)
+        except urllib.error.HTTPError as ex:
+            logging.warning("download failed with code %s for url %s", ex.code, ex.url)
+            continue
+        latest_dataset.to_json("data_all.json", orient='records', date_format='iso')
+        break
 
-    store.close()
