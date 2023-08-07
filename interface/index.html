@@ -85,7 +85,7 @@
 
 
 
-      $.getJSON('https://rgw.fisica.unimi.it/localgroupdisk-data/data_all.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=gjVmqhBEKRN2tZPd8cvUfDsm8eQ%3D&Expires=1689163855', function (data) {
+      $.getJSON('https://rgw.fisica.unimi.it/localgroupdisk-data/data_all.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=aZdrKSRp%2FL4DeSJWL7AEA5vOz2w%3D&Expires=1717332605', function (data) {
         var table = $('#table_datasets').DataTable({
           orderCellsTop: true,
           fixedHeader: true,
@@ -230,7 +230,7 @@
         };
         var layout_single = { "displayModeBar": false, "autosize": false, "yaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [0, 1.263423159516127], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "linear", "autorange": true, "showticklabels": false, "fixedrange": true }, "paper_bgcolor": "rgb(245, 246, 249)", "plot_bgcolor": "#F5F6F9", "titlefont": { "color": "#4D5663" }, "xaxis": { "tickfont": { "color": "#4D5663" }, "title": "", "showgrid": true, "zerolinecolor": "#E1E5ED", "range": [1420671600000, 1451430000000], "gridcolor": "#E1E5ED", "titlefont": { "color": "#4D5663" }, "type": "date", "autorange": true, "showticklabels": false, "fixedrange": true }, "legend": { "bgcolor": "#F5F6F9", "font": { "color": "#4D5663" } }, "height": 40, "width": 300, "margin": { "l": 10, "r": 10, "t": 10, "b": 10, "pad": 0, "autoexpand": true }, "separators": ".," };
 
-        $.getJSON('https://rgw.fisica.unimi.it/localgroupdisk-data/data.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=ZKxl9tvt71PRKAB76%2FFhB914aBE%3D&Expires=1688888444', function (data) {
+        $.getJSON('https://rgw.fisica.unimi.it/localgroupdisk-data/data.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=DLEKDYmMkgJ1udhKL3wGmTJQBGM%3D&Expires=1717332741', function (data) {
           (function () {
 
             var WIDTH_IN_PERCENT_OF_PARENT = 60,
@@ -274,7 +274,7 @@
                 });
                */
 
-        $.getJSON("https://rgw.fisica.unimi.it/localgroupdisk-data/data_pie.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=zw13YoesLxy8tdVfnd7BEmPJqHw%3D&Expires=1688891751", function (data) {
+        $.getJSON("https://rgw.fisica.unimi.it/localgroupdisk-data/data_pie.json?AWSAccessKeyId=M06HBTUGIKXVXYH1RES6&Signature=XsKXX2WnQngZph9DEHfj84CydJk%3D&Expires=1717332774", function (data) {
           var sum = data["data"][0]["values"].reduce(add, 0);
 
           function add(a, b) {
