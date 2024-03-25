@@ -36,7 +36,8 @@ def group_by_owner(data):
         "last_accessed_days": "mean",
         "size": lambda x: np.sum(x) / Tb,
     }
-    actions = {k: default_actions[k] for k in data.columns if k in default_actions}
+    actions = {k: default_actions[k]
+               for k in data.columns if k in default_actions}
     result = data.groupby("owner").agg(actions)
     result.columns = ["ndatasets"] + list(result.columns)[1:]
     return result
@@ -44,7 +45,8 @@ def group_by_owner(data):
 
 def get_data(rse, date, **kwargs):
     datestr = date.strftime("%d-%m-%Y")
-    url = "https://rucio-hadoop.cern.ch/consistency_datasets?rse=%s&date=%s" % (rse, datestr)
+    url = "https://rucio-hadoop.cern.ch/consistency_datasets?rse=%s&date=%s" % (
+        rse, datestr)
     return to_pandas(
         url, dateformat="ms" if date >= datetime.datetime(2015, 7, 31) else "string", **kwargs
     )
@@ -84,7 +86,8 @@ def to_pandas(filename, dateformat="ms", noderived=False):
                     filename,
                     sep="\t",
                     header=None,
-                    parse_dates=["creation_date", "last_accessed_date", "update_date"],
+                    parse_dates=["creation_date",
+                                 "last_accessed_date", "update_date"],
                     date_parser=lambda _: pd.to_datetime(float(_), unit="ms"),
                     converters={"owner": conv},
                     names=names,
@@ -153,10 +156,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Dump storage usage.")
     parser.add_argument("--rse")
     parser.add_argument("--yesterday", action="store_true")
-    parser.add_argument("--ndays", type=int, default=1, help="numer of days to dump, default=1")
-    parser.add_argument("--start", type=valid_date, help="start date, format= YYYY-MM-DD")
-    parser.add_argument("--end", type=valid_date, help="end date, format= YYYY-MM-DD")
-    parser.add_argument("--nquery", type=int, help="number of concurrent query", default=50)
+    parser.add_argument("--ndays", type=int, default=1,
+                        help="numer of days to dump, default=1")
+    parser.add_argument("--start", type=valid_date,
+                        help="start date, format= YYYY-MM-DD")
+    parser.add_argument("--end", type=valid_date,
+                        help="end date, format= YYYY-MM-DD")
+    parser.add_argument("--nquery", type=int,
+                        help="number of concurrent query", default=50)
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
 
@@ -265,7 +272,8 @@ if __name__ == "__main__":
 
     store = HDFStore("store.h5", complevel=9)
     fmap = wrap_monitor(
-        wrap_write(partial(fetch_safe, rse=args.rse), store, overwrite=args.overwrite), monitor
+        wrap_write(partial(fetch_safe, rse=args.rse),
+                   store, overwrite=args.overwrite), monitor
     )
     with multiprocessing.dummy.Pool(args.nquery) as pool:
         pool.map(fmap, datelist)
@@ -279,8 +287,9 @@ if __name__ == "__main__":
         try:
             latest_dataset = get_data(args.rse, date, noderived=False)
         except urllib.error.HTTPError as ex:
-            logging.warning("download failed with code %s for url %s", ex.code, ex.url)
+            logging.warning(
+                "download failed with code %s for url %s", ex.code, ex.url)
             continue
-        latest_dataset.to_json("data_all.json", orient='records', date_format='iso')
+        latest_dataset.to_json(
+            "data_all.json", orient='records', date_format='iso')
         break
-
