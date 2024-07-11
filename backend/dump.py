@@ -45,8 +45,7 @@ def group_by_owner(data):
 
 def get_data(rse, date, **kwargs):
     datestr = date.strftime("%d-%m-%Y")
-    url = "https://rucio-hadoop.cern.ch/consistency_datasets?rse=%s&date=%s" % (
-        rse, datestr)
+    url = f"https://rucio-hadoop.cern.ch/consistency_datasets?rse={rse}&date={datestr}"
     return to_pandas(
         url, dateformat="ms" if date >= datetime.datetime(2015, 7, 31) else "string", **kwargs
     )
@@ -114,9 +113,7 @@ def to_pandas(filename, dateformat="ms", noderived=False):
                 )
     except Exception as ex:
         if not isinstance(ex, urllib.error.HTTPError):
-            print(
-                ("cannot parse file from %s: %s" % (filename, str(ex.msg)))
-            )  # pylint: disable=E1101
+            print(f"cannot parse file from {filename}: {ex}")
 
         raise
 
@@ -221,9 +218,7 @@ if __name__ == "__main__":
                 self.display()
 
         def display(self):
-            msg = "\r{} ({})/{} errors: {}".format(
-                self.ndone, self.nrunning, self.ntotal, self.nerror
-            )
+            msg = f"\r{self.ndone} ({self.nrunning})/{self.ntotal} errors: {self.nerror}"
             with self.writing_lock:
                 sys.stdout.write("\r" + " " * len(msg))
                 sys.stdout.flush()
@@ -249,7 +244,7 @@ if __name__ == "__main__":
             except Exception as ex:
                 msg = str(ex)
                 if isinstance(ex, urllib.error.HTTPError):
-                    msg = "code %s for url %s" % (ex.code, ex.url)
+                    msg = f"code {ex.code} for url {ex.url}"
                 monitor.error(msg)
 
         return w
