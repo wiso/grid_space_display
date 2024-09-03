@@ -24,8 +24,6 @@ dump:
     - echo "Finished at $(date)"
   only:
     - master
-  schedule:
-    - cron: "0 1 * * *"
 
 analyze:
   stage: analyze
