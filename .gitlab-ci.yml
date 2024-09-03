@@ -40,27 +40,34 @@ analyze:
     - python3 backend/create_json.py
     - ls -l
     - echo "Finished at $(date)"
+  artifacts:
+    paths:
+      - data.json
+      - data_scatter.json
+      - data_pie.json
+      - data_all.json
+    expire_in: 1 hour
   only:
     - master
 
-#deploy_to_s3:
-#  stage: deploy
-#  image: python:$PYTHON_VERSION
-#  before_script:
-#    - apt-get update && apt-get install -y libs3-2
-#  script:
-#    - s3 delete localgroupdisk-data/data.json
-#    - s3 delete localgroupdisk-data/data_scatter.json
-#    - s3 delete localgroupdisk-data/data_pie.json
-#    - s3 delete localgroupdisk-data/data_all.json
-#    - s3 put localgroupdisk-data/data.json filename=data.json
-#    - s3 put localgroupdisk-data/data_scatter.json filename=data_scatter.json
-#    - s3 put localgroupdisk-data/data_pie.json filename=data_pie.json
-#    - s3 put localgroupdisk-data/data_all.json filename=data_all.json
-#  environment:
-#    S3_HOSTNAME: cephrgw.fisica.unimi.it
-#    S3_ACCESS_KEY_ID: $S3_ACCESS_KEY_ID
-#    S3_SECRET_ACCESS_KEY: $S3_SECRET_ACCESS_KEY
-#  only:
-#    - master
+deploy_to_s3:
+  stage: deploy
+  image: python:$PYTHON_VERSION
+  before_script:
+    - apt-get update && apt-get install -y libs3-2
+  script:
+    - s3 delete localgroupdisk-data/data.json
+    - s3 delete localgroupdisk-data/data_scatter.json
+    - s3 delete localgroupdisk-data/data_pie.json
+    - s3 delete localgroupdisk-data/data_all.json
+    - s3 put localgroupdisk-data/data.json filename=data.json
+    - s3 put localgroupdisk-data/data_scatter.json filename=data_scatter.json
+    - s3 put localgroupdisk-data/data_pie.json filename=data_pie.json
+    - s3 put localgroupdisk-data/data_all.json filename=data_all.json
+  environment:
+    S3_HOSTNAME: cephrgw.fisica.unimi.it
+    S3_ACCESS_KEY_ID: $S3_ACCESS_KEY_ID
+    S3_SECRET_ACCESS_KEY: $S3_SECRET_ACCESS_KEY
+  only:
+    - master
 
