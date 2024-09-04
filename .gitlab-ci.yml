@@ -25,6 +25,7 @@ dump:
   artifacts:
     paths:
       - store.h5
+      - data_all.json
     expire_in: 1 hour
   only:
     - master
