@@ -1,5 +1,5 @@
 # grid_space_display
-Mirron on gitlab: https://gitlab.cern.ch/turra/grid_space_display
+Mirror on gitlab: https://gitlab.cern.ch/turra/grid_space_display
 
 Tool to visualize the space used by each user of a grid space token, as localgroupdisk as a function of time, in a web page. Live example: https://turra.web.cern.ch/localgroupdiskusage/
 
