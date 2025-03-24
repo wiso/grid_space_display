@@ -13,7 +13,7 @@ before_script:
 
 dump:
   stage: dump
-  image: python:$PYTHON_VERSION
+  image: registry.cern.ch/docker.io/library/python:$PYTHON_VERSION
   script:
     - echo "Running on a $(uname -a) from $(pwd) on machine $(hostname)"
     - ls -l
@@ -32,7 +32,7 @@ dump:
 
 analyze:
   stage: analyze
-  image: python:$PYTHON_VERSION
+  image: registry.cern.ch/docker.io/library/python:$PYTHON_VERSION
   script:
     - echo "Running on a $(uname -a) from $(pwd) on machine $(hostname)"
     - ls -l
@@ -53,7 +53,7 @@ analyze:
 
 deploy_to_s3:
   stage: deploy
-  image: python:$PYTHON_VERSION
+  image: registry.cern.ch/docker.io/library/python:$PYTHON_VERSION
   before_script:
     - apt-get update && apt-get install -y libs3-2
     - export S3_HOSTNAME=cephrgw.fisica.unimi.it
